@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ignite Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    :root {
+      --bg-primary:    #080b0f;
+      --bg-secondary:  #0e1218;
+      --bg-card:       #141920;
+      --bg-card-hover: #1a2130;
+      --accent:        #00d4ff;
+      --accent-dim:    rgba(0,212,255,0.1);
+      --accent-glow:   rgba(0,212,255,0.35);
+      --text-primary:  #e2eaf4;
+      --text-secondary:#7a8799;
+      --text-muted:    #3d4a5a;
+      --border:        #1e2733;
+      --border-accent: rgba(0,212,255,0.25);
+      --success:       #2ea84c;
+      --warning:       #d4930a;
+      --danger:        #e84545;
+      --radius:        12px;
+      --radius-sm:     8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── AUTH ─────────────────────────────────────────────── */
+    #authScreen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .auth-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .auth-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .auth-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    /* ── SHARED INPUTS ────────────────────────────────────── */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"] {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--text-muted); }
+    input[readonly] { color: var(--text-secondary); cursor: default; }
+
+    /* ── BUTTONS ──────────────────────────────────────────── */
+    .btn {
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 20px;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .82; }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+
+    /* ── DASHBOARD ────────────────────────────────────────── */
+    #dashboard {
+      display: none;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+    }
+
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .dash-title { font-size: 20px; font-weight: 700; }
+    .dash-title span { color: var(--accent); }
+
+    /* ── SEARCH ───────────────────────────────────────────── */
+    .search-wrap { position: relative; margin-bottom: 16px; }
+    .search-wrap input { padding-left: 42px; }
+    .search-icon {
+      position: absolute;
+      left: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      font-size: 15px;
+    }
+
+    /* ── USER LIST ────────────────────────────────────────── */
+    #userList {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .user-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .user-row:hover    { background: var(--bg-card-hover); border-color: var(--border-accent); }
+    .user-row.selected { background: var(--bg-card-hover); border-color: var(--accent); }
+
+    .u-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid var(--border-accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .u-info   { flex: 1; min-width: 0; }
+    .u-name   { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .u-meta   { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    .u-stats  { display: flex; gap: 20px; flex-shrink: 0; }
+    .u-stat   { text-align: right; }
+    .u-stat-v { font-size: 14px; font-weight: 700; color: var(--accent); }
+    .u-stat-l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── EDIT PANEL ───────────────────────────────────────── */
+    #editPanel {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+
+    .ep-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-bottom: 18px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ep-name { font-size: 16px; font-weight: 700; }
+    .ep-meta { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+
+    .ep-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 540px) { .ep-grid { grid-template-columns: 1fr 1fr; } }
+
+    .ep-field label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin-bottom: 7px;
+    }
+
+    .ep-footer {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    #saveMsg {
+      font-size: 13px;
+      flex: 1;
+    }
+
+    /* ── UTILITY ──────────────────────────────────────────── */
+    .notice {
+      font-size: 13px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 14px;
+    }
+    .notice-error   { background: rgba(232,69,69,.1);  border: 1px solid rgba(232,69,69,.25); color: var(--danger);  }
+    .notice-success { background: rgba(46,168,76,.1);  border: 1px solid rgba(46,168,76,.25); color: var(--success); }
+    .notice-warn    { background: rgba(212,147,10,.1); border: 1px solid rgba(212,147,10,.25);color: var(--warning); }
+
+    .empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 36px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- ── AUTH SCREEN ──────────────────────────────────────────────────────── -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-title">Ignite <span style="color:var(--accent)">Admin</span></div>
+    <div class="auth-sub">Sign in with your admin account</div>
+    <div id="authNotice" class="notice notice-error hidden"></div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <input id="authEmail" type="email" placeholder="Email" autocomplete="email">
+      <input id="authPass"  type="password" placeholder="Password" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn btn-primary" onclick="doLogin()" style="width:100%;margin-top:4px;">Sign In</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ────────────────────────────────────────────────────────── -->
+<div id="dashboard">
+
+  <div class="dash-header">
+    <div class="dash-title">Ignite <span>Admin</span></div>
+    <button class="btn btn-ghost" onclick="doLogout()" style="font-size:13px;padding:8px 16px;">Sign Out</button>
+  </div>
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input id="searchInput" type="text"
+      placeholder="Search by display name or social code…"
+      oninput="onSearchInput()" autocomplete="off">
+  </div>
+
+  <div id="userList">
+    <div class="empty">Search for a user above</div>
+  </div>
+
+  <div id="editPanel">
+    <div class="ep-header">
+      <div class="u-avatar" id="epAvatar">?</div>
+      <div>
+        <div class="ep-name" id="epName">—</div>
+        <div class="ep-meta" id="epMeta">—</div>
+      </div>
+    </div>
+
+    <div id="epNotice" class="notice notice-error hidden"></div>
+
+    <div class="ep-grid">
+      <div class="ep-field">
+        <label>XP Earned (total)</label>
+        <input id="epXp" type="number" min="0" placeholder="0" oninput="onXpInput()">
+      </div>
+      <div class="ep-field">
+        <label>Streak (days)</label>
+        <input id="epStreak" type="number" min="0" placeholder="0">
+      </div>
+      <div class="ep-field">
+        <label>Level — derived from XP</label>
+        <input id="epLevel" type="text" readonly>
+      </div>
+    </div>
+
+    <div class="ep-footer">
+      <button class="btn btn-primary" onclick="doSave()">Save Changes</button>
+      <button class="btn btn-ghost"   onclick="closeEdit()">Cancel</button>
+      <div id="saveMsg"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── SUPABASE CLIENT ──────────────────────────────────────────────────────
+const _sb = supabase.createClient(
+  'https://mafyuufmowcdddqwxvpf.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZnl1dWZtb3djZGRkcXd4dnBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2ODYwMjUsImV4cCI6MjA5MzI2MjAyNX0.vgkmB6VZpkt_KB8GoVNL-cv6wTU3ldlHREZRkTaWFW4'
+);
+
+// ── LEVELS — KEEP IN SYNC WITH index.html ────────────────────────────────
+const LEVELS = [
+  { n:1,  name:'Initiate',   xp:0      },
+  { n:2,  name:'Apprentice', xp:500    },
+  { n:3,  name:'Seeker',     xp:1500   },
+  { n:4,  name:'Challenger', xp:3500   },
+  { n:5,  name:'Devoted',    xp:7000   },
+  { n:6,  name:'Warrior',    xp:12000  },
+  { n:7,  name:'Guardian',   xp:20000  },
+  { n:8,  name:'Adept',      xp:32000  },
+  { n:9,  name:'Expert',     xp:50000  },
+  { n:10, name:'Master',     xp:75000  },
+  { n:11, name:'Elite',      xp:110000 },
+  { n:12, name:'Champion',   xp:160000 },
+  { n:13, name:'Legend',     xp:225000 },
+  { n:14, name:'Mythic',     xp:310000 },
+  { n:15, name:'Ascendant',  xp:420000 },
+  { n:16, name:'Prestige',   xp:550000 },
+];
+
+function levelFromXp(xp) {
+  let lvl = LEVELS[0];
+  for (const l of LEVELS) {
+    if (xp >= l.xp) lvl = l; else break;
+  }
+  return lvl;
+}
+
+// ── STATE ────────────────────────────────────────────────────────────────
+let _selectedId   = null;
+let _searchTimer  = null;
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+(async () => {
+  const { data: { session } } = await _sb.auth.getSession();
+  if (session) await gateAndShow(session.user);
+})();
+
+// ── AUTH ─────────────────────────────────────────────────────────────────
+async function doLogin() {
+  clearAuthNotice();
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPass').value;
+  if (!email || !pass) { showAuthNotice('Enter your email and password.'); return; }
+
+  const { data, error } = await _sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { showAuthNotice(error.message); return; }
+  await gateAndShow(data.user);
+}
+
+async function gateAndShow(user) {
+  // The admins table SELECT policy controls access — no client-side bypass
+  const { data, error } = await _sb.from('admins')
+    .select('user_id').eq('user_id', user.id).maybeSingle();
+
+  if (error) {
+    await _sb.auth.signOut();
+    showAuthNotice(`Admin check failed: ${error.message}`);
+    return;
+  }
+  if (!data) {
+    await _sb.auth.signOut();
+    showAuthNotice('Access denied — your account is not in the admins table.');
+    return;
+  }
+
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display  = 'block';
+  document.getElementById('searchInput').focus();
+}
+
+async function doLogout() {
+  await _sb.auth.signOut();
+  document.getElementById('authScreen').style.display = '';
+  document.getElementById('dashboard').style.display  = 'none';
+  document.getElementById('userList').innerHTML = '<div class="empty">Search for a user above</div>';
+  closeEdit();
+}
+
+function showAuthNotice(msg) {
+  const el = document.getElementById('authNotice');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+function clearAuthNotice() {
+  document.getElementById('authNotice').classList.add('hidden');
+}
+
+// ── SEARCH ───────────────────────────────────────────────────────────────
+function onSearchInput() {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(runSearch, 350);
+}
+
+async function runSearch() {
+  const q      = document.getElementById('searchInput').value.trim();
+  const listEl = document.getElementById('userList');
+  if (!q) { listEl.innerHTML = '<div class="empty">Search for a user above</div>'; return; }
+
+  listEl.innerHTML = '<div class="empty">Searching…</div>';
+  closeEdit();
+
+  const upper = q.toUpperCase();
+  const { data: rows, error } = await _sb
+    .from('profiles')
+    .select('id, display_name, social_code, level, streak')
+    .or(`social_code.eq.${upper},display_name.ilike.%${q}%`)
+    .limit(20);
+
+  if (error) {
+    listEl.innerHTML = notice('Search failed: ' + error.message, 'error');
+    return;
+  }
+  if (!rows?.length) {
+    listEl.innerHTML = '<div class="empty">No users found</div>';
+    return;
+  }
+
+  // Pull live XP from user_data for all matched users in one query
+  const ids = rows.map(r => r.id);
+  const { data: udRows } = await _sb.from('user_data').select('user_id, data').in('user_id', ids);
+  const udMap = {};
+  (udRows || []).forEach(r => { udMap[r.user_id] = r.data || {}; });
+
+  listEl.innerHTML = '';
+  for (const row of rows) {
+    const ud     = udMap[row.id] || {};
+    const xp     = ud.xpEarned ?? 0;
+    const streak = ud.streak   ?? row.streak ?? 0;
+    const lvl    = levelFromXp(xp);
+    const init   = (row.display_name || '?')[0].toUpperCase();
+
+    const el = document.createElement('div');
+    el.className = 'user-row' + (_selectedId === row.id ? ' selected' : '');
+    el.dataset.uid = row.id;
+    el.innerHTML = `
+      <div class="u-avatar">${esc(init)}</div>
+      <div class="u-info">
+        <div class="u-name">${esc(row.display_name || '—')}</div>
+        <div class="u-meta">${esc(row.social_code || '—')} &nbsp;·&nbsp; ${row.id.slice(0,8)}…</div>
+      </div>
+      <div class="u-stats">
+        <div class="u-stat"><div class="u-stat-v">${lvl.n}</div><div class="u-stat-l">Level</div></div>
+        <div class="u-stat"><div class="u-stat-v">${xp.toLocaleString()}</div><div class="u-stat-l">XP</div></div>
+        <div class="u-stat"><div class="u-stat-v">${streak}</div><div class="u-stat-l">Streak</div></div>
+      </div>`;
+    el.onclick = () => openEdit(row, ud);
+    listEl.appendChild(el);
+  }
+}
+
+// ── EDIT PANEL ───────────────────────────────────────────────────────────
+async function openEdit(prof, cachedUd) {
+  _selectedId = prof.id;
+  setSaveMsg('');
+  hideEpNotice();
+
+  document.querySelectorAll('.user-row').forEach(r =>
+    r.classList.toggle('selected', r.dataset.uid === prof.id));
+
+  // Always re-fetch live data when opening edit
+  const { data: fresh, error: fetchErr } = await _sb
+    .from('user_data').select('data').eq('user_id', prof.id).maybeSingle();
+
+  if (fetchErr) showEpNotice(`Could not load user data: ${fetchErr.message}`);
+
+  const d      = fresh?.data || cachedUd || {};
+  const xp     = d.xpEarned ?? 0;
+  const streak = d.streak   ?? 0;
+  const lvl    = levelFromXp(xp);
+
+  document.getElementById('epAvatar').textContent = (prof.display_name || '?')[0].toUpperCase();
+  document.getElementById('epName').textContent   = prof.display_name || '—';
+  document.getElementById('epMeta').textContent   = `${prof.social_code || '—'} · ID: ${prof.id.slice(0,8)}…`;
+  document.getElementById('epXp').value     = xp;
+  document.getElementById('epStreak').value = streak;
+  document.getElementById('epLevel').value  = `${lvl.n} — ${lvl.name}`;
+
+  const panel = document.getElementById('editPanel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function onXpInput() {
+  const xp  = parseInt(document.getElementById('epXp').value) || 0;
+  const lvl = levelFromXp(xp);
+  document.getElementById('epLevel').value = `${lvl.n} — ${lvl.name}`;
+}
+
+function closeEdit() {
+  _selectedId = null;
+  document.getElementById('editPanel').style.display = 'none';
+  document.querySelectorAll('.user-row').forEach(r => r.classList.remove('selected'));
+}
+
+async function doSave() {
+  if (!_selectedId) return;
+  const uid      = _selectedId;
+  const xpEarned = parseInt(document.getElementById('epXp').value)     || 0;
+  const streak   = parseInt(document.getElementById('epStreak').value)  || 0;
+  const lvl      = levelFromXp(xpEarned);
+  const name     = document.getElementById('epName').textContent;
+
+  // Re-verify admin status before every write
+  const { data: adminRow } = await _sb.from('admins')
+    .select('user_id').eq('user_id', (await _sb.auth.getUser()).data.user?.id).maybeSingle();
+  if (!adminRow) {
+    setSaveMsg('Session no longer has admin access.', 'error');
+    await doLogout();
+    return;
+  }
+
+  // Confirm before committing
+  if (!confirm(`Set ${name}'s XP to ${xpEarned.toLocaleString()} and streak to ${streak}?`)) return;
+
+  setSaveMsg('Saving…', 'neutral');
+  hideEpNotice();
+
+  // Read existing blob — refuse to create a new row from scratch to avoid wiping user data
+  const { data: existing, error: readErr } = await _sb.from('user_data')
+    .select('data').eq('user_id', uid).maybeSingle();
+
+  if (readErr) {
+    setSaveMsg(`Read failed: ${readErr.message}`, 'error');
+    return;
+  }
+  if (!existing) {
+    setSaveMsg('No app data found for this user — have them open the app first.', 'error');
+    showEpNotice('user_data row does not exist yet. The user must sign in to the app at least once before it can be edited here.');
+    return;
+  }
+
+  const patched = {
+    ...existing.data,
+    xpEarned,
+    xp: xpEarned,
+    streak,
+  };
+
+  const { error: udErr } = await _sb.from('user_data')
+    .update({ data: patched, updated_at: new Date().toISOString() })
+    .eq('user_id', uid);
+
+  if (udErr) {
+    setSaveMsg(`Failed: ${udErr.message}`, 'error');
+    showEpNotice(`user_data write blocked: ${udErr.message} — check your RLS policies.`);
+    return;
+  }
+
+  const { error: profErr } = await _sb.from('profiles')
+    .update({ level: lvl.n, streak }).eq('id', uid);
+
+  if (profErr) {
+    setSaveMsg(`XP saved. Profile update failed: ${profErr.message}`, 'warn');
+    return;
+  }
+
+  setSaveMsg('Saved — changes apply when the user next opens the app.', 'success');
+
+  // Re-run search to refresh the user list stats in place
+  await runSearch();
+  document.querySelectorAll('.user-row').forEach(r => {
+    if (r.dataset.uid === uid) r.classList.add('selected');
+  });
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────
+function setSaveMsg(msg, type) {
+  const el = document.getElementById('saveMsg');
+  el.textContent = msg;
+  el.style.color = type === 'success' ? 'var(--success)'
+    : type === 'error'   ? 'var(--danger)'
+    : type === 'warn'    ? 'var(--warning)'
+    : 'var(--text-secondary)';
+}
+
+function showEpNotice(msg) {
+  const el = document.getElementById('epNotice');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+function hideEpNotice() {
+  document.getElementById('epNotice').classList.add('hidden');
+}
+
+function notice(msg, type) {
+  return `<div class="notice notice-${type}">${esc(msg)}</div>`;
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+</script>
+</body>
+</html>
