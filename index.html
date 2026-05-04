@@ -1,0 +1,3994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ignite</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🔥</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ignite">
+  <meta name="theme-color" content="#080b0f">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #080b0f;
+      --bg-secondary: #0e1218;
+      --bg-card: #141920;
+      --bg-card-hover: #1a2130;
+      --accent: #00d4ff;
+      --accent-dim: rgba(0,212,255,0.1);
+      --accent-glow: rgba(0,212,255,0.35);
+      --text-primary: #e2eaf4;
+      --text-secondary: #7a8799;
+      --text-muted: #3d4a5a;
+      --border: #1e2733;
+      --border-accent: rgba(0,212,255,0.25);
+      --success: #2ea84c;
+      --success-dim: rgba(46,168,76,0.12);
+      --warning: #d4930a;
+      --danger: #e84545;
+      --gold: #f0c040;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    [data-theme="midnight"] {
+      --accent: #818cf8;
+      --accent-dim: rgba(129,140,248,0.12);
+      --accent-glow: rgba(129,140,248,0.35);
+      --border-accent: rgba(129,140,248,0.25);
+      --bg-primary: #06080f;
+      --bg-secondary: #0b0e1c;
+      --bg-card: #111525;
+      --bg-card-hover: #171d30;
+    }
+
+    [data-theme="crimson"] {
+      --accent: #ff4d6d;
+      --accent-dim: rgba(255,77,109,0.12);
+      --accent-glow: rgba(255,77,109,0.35);
+      --border-accent: rgba(255,77,109,0.25);
+      --bg-primary: #0f0709;
+      --bg-secondary: #1a0c0f;
+      --bg-card: #201015;
+      --bg-card-hover: #27141a;
+    }
+
+    [data-theme="aurora"] {
+      --accent: #00ffcc;
+      --accent-dim: rgba(0,255,204,0.1);
+      --accent-glow: rgba(0,255,204,0.3);
+      --border-accent: rgba(0,255,204,0.2);
+      --bg-primary: #060f0e;
+      --bg-secondary: #0c1a18;
+      --bg-card: #101f1d;
+      --bg-card-hover: #162825;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(8,11,15,0.96);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      height: 60px;
+      display: flex; align-items: center;
+      padding: 0 28px; gap: 20px;
+    }
+
+    .logo {
+      font-size: 17px; font-weight: 800;
+      letter-spacing: -0.5px; white-space: nowrap;
+      background: linear-gradient(135deg, #ff9a00, #ff4500, #ff6b00);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo span { -webkit-text-fill-color: transparent; }
+
+    [data-prestige="true"] .logo {
+      background: linear-gradient(135deg, #f0c040, #ff6b6b, #00d4ff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .header-xp {
+      flex: 1; display: flex; align-items: center; gap: 12px;
+    }
+
+    .level-badge {
+      background: var(--accent-dim); border: 1px solid var(--border-accent);
+      color: var(--accent); font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 100px; white-space: nowrap;
+      letter-spacing: 0.4px; text-transform: uppercase;
+    }
+
+    .xp-track { flex: 1; max-width: 280px; }
+    .xp-track-labels {
+      display: flex; justify-content: space-between;
+      font-size: 10px; color: var(--text-muted); margin-bottom: 5px;
+    }
+    .xp-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .xp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 60%, white));
+      border-radius: 2px;
+      transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 0 6px var(--accent-glow);
+    }
+
+    .header-pills { display: flex; align-items: center; gap: 10px; }
+
+
+
+    .pill {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 4px 10px; font-size: 13px;
+    }
+    .pill .v { font-weight: 700; }
+    .pill .l { font-size: 10px; color: var(--text-secondary); }
+    .pill.gold-pill { border-color: rgba(240,192,64,0.35); background: rgba(240,192,64,0.07); }
+
+    /* ── NAV ── */
+    .nav {
+      display: flex; padding: 0 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-secondary);
+      overflow-x: hidden;
+    }
+
+    .nav-tab {
+      padding: 13px 18px; font-size: 13px; font-weight: 500;
+      color: var(--text-secondary); cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.18s; white-space: nowrap; user-select: none;
+    }
+    .nav-tab:hover { color: var(--text-primary); }
+    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .nav-tab-badge { display:inline-flex; align-items:center; justify-content:center; background:#e53935; color:#fff; font-size:10px; font-weight:700; border-radius:999px; min-width:16px; height:16px; padding:0 4px; margin-left:5px; vertical-align:middle; line-height:1; }
+
+    /* ── MAIN ── */
+    .main { max-width: 860px; margin: 0 auto; padding: 28px 24px; }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── SECTION HEADER ── */
+    .section-head {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .section-title { font-size: 20px; font-weight: 700; }
+    .section-sub { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      border: none; transition: all 0.18s; font-family: inherit;
+    }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover { opacity: 0.82; box-shadow: 0 0 14px var(--accent-glow); }
+    .btn-ghost {
+      background: transparent; color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(232,69,69,0.25); }
+    .btn-danger:hover { background: rgba(232,69,69,0.08); }
+    .btn-surge {
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      color: #fff; font-weight: 700; overflow: hidden; position: relative;
+    }
+    .btn-surge::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.18) 50%, transparent 65%);
+      animation: shimmer 2.2s infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* ── PROGRESS SUMMARY ── */
+    .progress-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 22px;
+      display: flex; align-items: center; gap: 22px;
+      margin-bottom: 22px;
+    }
+
+    .ring-wrap { position: relative; width: 68px; height: 68px; flex-shrink: 0; }
+    .ring-svg { transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: var(--border); stroke-width: 5; }
+    .ring-fill {
+      fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round;
+      transition: stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1);
+      filter: drop-shadow(0 0 3px var(--accent-glow));
+    }
+    .ring-text {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: var(--text-primary);
+    }
+
+    .progress-info { flex: 1; }
+    .progress-title { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+    .progress-sub { font-size: 13px; color: var(--text-secondary); }
+
+    .progress-xp { text-align: right; }
+    .progress-xp .num { font-size: 26px; font-weight: 800; color: var(--accent); line-height: 1; }
+    .progress-xp .lbl { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ── POWERUP BAR ── */
+    #powerupBar {
+      display: flex; gap: 8px; align-items: center;
+      flex-wrap: wrap; margin-bottom: 20px; min-height: 0;
+    }
+
+    .surge-badge {
+      background: linear-gradient(135deg,rgba(245,158,11,0.18),rgba(239,68,68,0.18));
+      border: 1px solid rgba(245,158,11,0.4); color: #f59e0b;
+      font-size: 11px; font-weight: 800; padding: 4px 12px;
+      border-radius: 100px; letter-spacing: 0.3px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.65} }
+
+    .shield-badge {
+      background: var(--accent-dim); border: 1px solid var(--border-accent);
+      color: var(--accent); font-size: 11px; font-weight: 700;
+      padding: 4px 12px; border-radius: 100px;
+    }
+
+    /* ── STREAK HERO ── */
+    .streak-hero {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 32px 24px 22px;
+      margin-bottom: 22px; text-align: center;
+      transition: border-color 0.4s, background 0.4s;
+    }
+    .streak-hero.sh-active {
+      border-color: rgba(255,120,20,0.35);
+      background: rgba(255,90,0,0.04);
+    }
+    .streak-hero.sh-perfect {
+      border-color: var(--border-accent);
+      background: var(--accent-dim);
+    }
+
+    .sh-main {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; margin-bottom: 10px;
+    }
+
+    .sh-flame {
+      font-size: 72px; line-height: 1; user-select: none;
+      display: block; transition: filter 0.5s;
+    }
+    .streak-hero.sh-unlit .sh-flame {
+      filter: grayscale(1) opacity(0.2);
+    }
+    .streak-hero.sh-active .sh-flame {
+      filter: none;
+      animation: shFlamePulse 2s ease-in-out infinite;
+      text-shadow: 0 0 40px rgba(255,140,0,0.6), 0 0 80px rgba(255,60,0,0.3);
+    }
+    .streak-hero.sh-perfect .sh-flame {
+      filter: hue-rotate(200deg) saturate(2) brightness(1.1);
+      animation: shFlamePulse 1.6s ease-in-out infinite;
+      text-shadow: 0 0 40px var(--accent-glow), 0 0 80px var(--accent-glow);
+    }
+    @keyframes shFlamePulse {
+      0%,100% { transform: scale(1) rotate(-1deg); }
+      50%      { transform: scale(1.08) rotate(1deg); }
+    }
+
+    .sh-number {
+      font-size: 80px; font-weight: 900; line-height: 1;
+      letter-spacing: -4px; color: var(--text-muted);
+      transition: color 0.4s;
+    }
+    .streak-hero.sh-active .sh-number  { color: #ff7a20; }
+    .streak-hero.sh-perfect .sh-number { color: var(--accent); }
+
+    .sh-label {
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 2px; color: var(--text-muted);
+      margin-bottom: 7px; transition: color 0.4s;
+    }
+    .streak-hero.sh-active .sh-label,
+    .streak-hero.sh-perfect .sh-label { color: var(--text-secondary); }
+
+    .sh-status {
+      font-size: 13px; color: var(--text-muted); transition: color 0.4s;
+    }
+    .streak-hero.sh-active .sh-status  { color: var(--text-secondary); }
+    .streak-hero.sh-perfect .sh-status { color: var(--accent); font-weight: 600; }
+
+    /* ── HABIT CARDS ── */
+    .habits { display: flex; flex-direction: column; gap: 9px; }
+
+    .habit-card {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      transition: background 0.18s, border-color 0.18s;
+      position: relative; overflow: hidden;
+      user-select: none;
+    }
+    .habit-card:hover {
+      border-color: var(--border-accent);
+      background: var(--bg-card-hover);
+    }
+    .habit-card.done {
+      border-color: rgba(46,168,76,0.28);
+      background: rgba(46,168,76,0.035);
+    }
+    .habit-card.done::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: var(--success); border-radius: 3px 0 0 3px;
+    }
+
+    .habit-checkbox {
+      width: 22px; height: 22px; flex-shrink: 0;
+      border-radius: 6px; border: 2px solid var(--border);
+      background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.18s; color: transparent; font-size: 13px; font-weight: 800;
+    }
+    .habit-card.done .habit-checkbox {
+      background: var(--success); border-color: var(--success); color: #fff;
+    }
+    .habit-checkbox:hover { border-color: var(--success); }
+
+    .hinfo { flex: 1; min-width: 0; }
+    .hname { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .habit-card.done .hname { text-decoration: line-through; color: var(--text-secondary); }
+    .hxp { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .hxp .xv { color: var(--accent); font-weight: 700; }
+
+    .hactions {
+      display: flex; gap: 5px; opacity: 0; transition: opacity 0.18s;
+    }
+    .habit-card:hover .hactions { opacity: 1; }
+
+    .hbtn {
+      width: 28px; height: 28px; border-radius: 6px;
+      border: 1px solid var(--border); background: transparent;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; font-size: 13px;
+      color: var(--text-secondary); transition: all 0.18s;
+    }
+    .hbtn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+    .hbtn.del:hover { border-color: rgba(232,69,69,0.4); color: var(--danger); background: rgba(232,69,69,0.07); }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center; padding: 56px 20px;
+      color: var(--text-secondary);
+    }
+    .empty .ei { font-size: 44px; margin-bottom: 14px; }
+    .empty h3 { font-size: 16px; color: var(--text-primary); margin-bottom: 7px; }
+    .empty p { font-size: 14px; }
+
+    /* ── CALENDAR ── */
+    .cal-head {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .cal-nav { display: flex; gap: 7px; }
+    .cal-nav-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent;
+      cursor: pointer; color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; transition: all 0.18s; line-height: 1;
+    }
+    .cal-nav-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+
+    .cal-wrap {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .cal-grid {
+      display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 4px;
+    }
+    .cal-dh {
+      text-align: center; font-size: 10px; font-weight: 700;
+      color: var(--text-muted); padding: 7px 0;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .cal-day {
+      aspect-ratio: 1; border-radius: 8px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-size: 12px; border: 1px solid transparent;
+      transition: all 0.15s; position: relative;
+    }
+    .cal-day.empty { background: transparent; border: none; }
+    .cal-day.none { background: var(--bg-secondary); color: var(--text-muted); }
+    .cal-day.partial { background: var(--accent-dim); border-color: var(--border-accent); color: var(--accent); }
+    .cal-day.full { background: rgba(46,168,76,0.14); border-color: rgba(46,168,76,0.28); color: var(--success); }
+    .cal-day.super { background: rgba(240,192,64,0.12); border-color: rgba(240,192,64,0.28); color: var(--gold); }
+    .cal-day.today { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .cal-day.future { opacity: 0.22; }
+    .cal-day .dn { font-weight: 600; line-height: 1; }
+    .cal-day .dd { width: 4px; height: 4px; border-radius: 50%; background: currentColor; margin-top: 3px; }
+
+    .cal-legend {
+      display: flex; gap: 18px; margin-top: 14px; flex-wrap: wrap;
+    }
+    .leg { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+    .leg-dot { width: 11px; height: 11px; border-radius: 3px; }
+
+    /* ── ACHIEVEMENTS ── */
+    .badge-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+    .badge-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 10px 12px;
+      display: flex; align-items: center; gap: 10px; text-align: left;
+      transition: all 0.18s;
+    }
+    .badge-card.earned { border-color: var(--border-accent); cursor: pointer; }
+    .badge-card.earned:hover { border-color: var(--accent); background: var(--bg-card-hover); }
+    .badge-card.featured { border-color: var(--accent); background: var(--accent-dim); }
+    .badge-card.locked { opacity: 0.38; }
+    .badge-icon { font-size: 22px; flex-shrink: 0; }
+    .badge-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .badge-desc { font-size: 10px; color: var(--text-secondary); line-height: 1.35; }
+    .badge-status { font-size: 10px; font-weight: 800; color: var(--success); margin-top: 7px; letter-spacing: 0.5px; }
+    .badge-featured-tag { font-size: 10px; font-weight: 800; color: var(--accent); margin-top: 5px; letter-spacing: 0.5px; }
+    .pid-featured-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .pid-feat-badge { font-size: 12px; background: var(--bg-secondary); border: 1px solid var(--border-accent); border-radius: 20px; padding: 3px 9px; color: var(--text-secondary); }
+
+    /* ── PROFILE IDENTITY CARD ── */
+    .profile-id-card {
+      display: flex; align-items: flex-start; gap: 20px;
+    }
+
+    .pid-avatar {
+      width: 80px; height: 80px; border-radius: 50%; flex-shrink: 0;
+      background: var(--accent-dim); border: 2px solid var(--border-accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 800; color: var(--accent);
+      overflow: hidden; background-size: cover; background-position: center;
+      letter-spacing: -1px; user-select: none;
+    }
+
+    .pid-body { flex: 1; min-width: 0; }
+    .pid-name { font-size: 19px; font-weight: 700; margin-bottom: 3px; }
+    .pid-name.empty { color: var(--text-muted); font-style: italic; font-weight: 400; }
+    .pid-title { font-size: 12px; color: var(--gold); font-style: italic; margin-bottom: 6px; }
+    .pid-bio { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+    .pid-bio.empty { color: var(--text-muted); font-style: italic; }
+
+    /* Pic upload in modal */
+    .pic-upload-wrap {
+      width: 96px; height: 96px; border-radius: 50%;
+      cursor: pointer; position: relative; overflow: hidden;
+      border: 2px solid var(--border-accent); background: var(--accent-dim);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: 800; color: var(--accent);
+      margin: 0 auto 20px; flex-shrink: 0;
+      background-size: cover; background-position: center;
+    }
+    .pic-upload-overlay {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; opacity: 0; transition: opacity 0.18s;
+    }
+    .pic-upload-wrap:hover .pic-upload-overlay { opacity: 1; }
+    .pic-upload-hint {
+      font-size: 11px; color: var(--text-muted); text-align: center;
+      margin-top: -12px; margin-bottom: 18px;
+    }
+
+    /* ── CROP UI ── */
+    .crop-container {
+      width: 200px; height: 200px; border-radius: 50%;
+      overflow: hidden; margin: 0 auto 14px;
+      cursor: grab; position: relative;
+      border: 2px solid var(--border-accent);
+      background: var(--bg-secondary); touch-action: none;
+    }
+    .crop-container:active { cursor: grabbing; }
+    .crop-container img {
+      position: absolute; user-select: none;
+      pointer-events: none; max-width: none;
+    }
+    .crop-zoom-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 8px;
+    }
+    .crop-zoom-row input[type=range] { flex: 1; accent-color: var(--accent); cursor: pointer; }
+    .crop-zoom-lbl { font-size: 14px; color: var(--text-muted); line-height: 1; }
+    .crop-hint { font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 18px; }
+
+    /* ── PROFILE ── */
+    .p-section {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px;
+      margin-bottom: 18px;
+    }
+    .p-section-title {
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 16px;
+    }
+
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 10px;
+    }
+    .stat-box {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 16px;
+    }
+    .stat-box .sv { font-size: 26px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+    .stat-box .sl { font-size: 12px; color: var(--text-secondary); }
+
+    .powerup-row { display: flex; flex-direction: column; gap: 10px; }
+    .pu-card {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .pu-icon { font-size: 26px; flex-shrink: 0; }
+    .pu-body { flex: 1; }
+    .pu-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .pu-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+    .pu-action { margin-top: 9px; display: flex; gap: 7px; flex-wrap: wrap; }
+
+    .theme-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .theme-swatch {
+      width: 50px; height: 50px; border-radius: 10px;
+      cursor: pointer; border: 2px solid transparent;
+      transition: all 0.18s; display: flex; align-items: center;
+      justify-content: center; font-size: 20px; position: relative;
+    }
+    .theme-swatch.active { border-width: 2px; box-shadow: 0 0 0 3px var(--accent-dim); }
+    .theme-swatch.locked { opacity: 0.3; cursor: not-allowed; }
+    .theme-swatch.locked::after {
+      content: '🔒'; font-size: 12px; position: absolute;
+      bottom: -5px; right: -5px;
+    }
+
+    .roadmap { display: flex; flex-direction: column; }
+    .roadmap-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+    }
+    .roadmap-row:last-child { border-bottom: none; }
+    .roadmap-bubble {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0; border: 2px solid var(--border);
+      background: var(--bg-secondary);
+    }
+    .roadmap-bubble.done { border-color: var(--success); background: rgba(46,168,76,0.1); }
+    .roadmap-bubble.current { border-color: var(--accent); background: var(--accent-dim); }
+    .roadmap-text { flex: 1; }
+    .roadmap-lvl { font-size: 14px; font-weight: 700; }
+    .roadmap-lvl.current-lvl { color: var(--accent); }
+    .roadmap-unlock { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .roadmap-xp { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .curr-tag {
+      font-size: 9px; font-weight: 800; color: var(--accent);
+      background: var(--accent-dim); border: 1px solid var(--border-accent);
+      padding: 2px 6px; border-radius: 100px; margin-left: 7px;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    /* ── MODAL ── */
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px); z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-bg.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px; width: 100%;
+      max-width: 430px; margin: 16px;
+      transform: translateY(10px); transition: transform 0.2s;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-bg.open .modal { transform: translateY(0); }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+
+    .fgrp { margin-bottom: 15px; }
+    .flabel {
+      display: block; font-size: 11px; font-weight: 700;
+      color: var(--text-secondary); text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+    .finput {
+      width: 100%; background: var(--bg-secondary);
+      border: 1px solid var(--border); color: var(--text-primary);
+      font-size: 14px; padding: 10px 13px; border-radius: var(--radius-sm);
+      outline: none; transition: border-color 0.18s; font-family: inherit;
+    }
+    .finput:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+    .finput::placeholder { color: var(--text-muted); }
+
+    /* Difficulty selector */
+    .diff-seg {
+      display: flex; gap: 6px; background: var(--bg-secondary);
+      border-radius: 8px; padding: 4px;
+    }
+    .diff-btn {
+      flex: 1; padding: 8px 4px; border: none; background: transparent;
+      border-radius: 6px; font-size: 12px; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; transition: all .18s;
+      font-family: inherit;
+    }
+    .diff-btn:hover { color: var(--text-secondary); }
+    .diff-btn.active[data-diff="light"]    { background: var(--success-dim); color: var(--success); }
+    .diff-btn.active[data-diff="moderate"] { background: rgba(212,147,10,.13); color: var(--warning); }
+    .diff-btn.active[data-diff="hard"]     { background: rgba(232,69,69,.12); color: var(--danger); }
+
+    .xp-hint {
+      display: flex; align-items: center; gap: 9px;
+      padding: 11px 13px; background: var(--accent-dim);
+      border: 1px solid var(--border-accent); border-radius: var(--radius-sm);
+      font-size: 13px; color: var(--accent); margin-bottom: 15px;
+    }
+
+    .form-row { display: flex; gap: 9px; justify-content: flex-end; }
+
+    /* ── LEVEL UP ── */
+    .lvlup-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(10px); z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.28s;
+    }
+    .lvlup-bg.show { opacity: 1; pointer-events: all; }
+
+    .lvlup-card {
+      text-align: center; max-width: 380px; padding: 48px 36px;
+      transform: scale(0.88);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .lvlup-bg.show .lvlup-card { transform: scale(1); }
+
+    .lvlup-icon { font-size: 68px; margin-bottom: 14px; animation: float 2s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    .lvlup-tag {
+      font-size: 12px; text-transform: uppercase; letter-spacing: 3px;
+      color: var(--accent); margin-bottom: 6px; font-weight: 700;
+    }
+    .lvlup-name {
+      font-size: 38px; font-weight: 900; margin-bottom: 6px;
+      background: linear-gradient(135deg, var(--accent), #fff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .lvlup-unlock {
+      font-size: 14px; color: var(--text-secondary); margin-bottom: 30px; line-height: 1.5;
+    }
+    .lvlup-unlock strong { color: var(--gold); }
+
+    /* ── TOAST ── */
+    .toast-wrap {
+      position: fixed; bottom: 22px; right: 22px;
+      z-index: 1500; display: flex; flex-direction: column; gap: 7px;
+    }
+    .toast {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 11px 15px;
+      font-size: 13px; max-width: 290px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      animation: slideUp 0.25s ease;
+      transition: opacity 0.25s;
+    }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.warn { border-left: 3px solid var(--warning); }
+    .toast.info { border-left: 3px solid var(--accent); }
+    @keyframes slideUp { from{transform:translateY(12px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+    /* ── XP FLOAT ── */
+    .xp-float {
+      position: fixed; pointer-events: none; z-index: 3000;
+      font-size: 17px; font-weight: 800; color: var(--accent);
+      text-shadow: 0 0 12px var(--accent-glow);
+      animation: xpRise 1.4s ease forwards;
+    }
+    @keyframes xpRise { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-55px) scale(1.15)} }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .header { padding: 0 14px; gap: 8px; }
+      .xp-track { display: none; }
+      .pill .l { display: none; }
+      .pill { padding: 4px 8px; gap: 4px; font-size: 13px; }
+      .header-pills { gap: 6px; }
+      .main { padding: 20px 14px; }
+      .nav { padding: 0 14px; }
+      .progress-xp .num { font-size: 20px; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .cal-wrap { padding: 10px; }
+      .cal-grid {
+        gap: 2px;
+        grid-template-rows: auto;
+        grid-auto-rows: calc((100vw - 60px) / 7);
+      }
+      .cal-dh { font-size: 9px; padding: 5px 0; letter-spacing: 0; }
+      .cal-day { aspect-ratio: auto; font-size: 11px; border-radius: 6px; }
+    }
+
+    /* ── NOTIFICATION BANNER ── */
+    .notif-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 998;
+      background: var(--bg-card); border-bottom: 1px solid var(--border-accent);
+      padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.4);
+    }
+    .notif-banner.sb-hidden { display: none; }
+
+    /* ── TOGGLE SWITCH ── */
+    .t-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+    .t-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .t-track {
+      position: absolute; inset: 0; cursor: pointer;
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 12px; transition: .2s;
+    }
+    .t-track::before {
+      content: ''; position: absolute;
+      width: 18px; height: 18px; left: 2px; bottom: 2px;
+      background: var(--text-muted); border-radius: 50%; transition: .2s;
+    }
+    .t-switch input:checked + .t-track { background: var(--accent); border-color: var(--accent); }
+    .t-switch input:checked + .t-track::before { transform: translateX(20px); background: #fff; }
+
+    /* ── DARK TIME INPUT ── */
+    input[type="time"].dark-time {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      color: var(--text-primary); border-radius: var(--radius-sm);
+      padding: 6px 10px; font-size: 14px; font-family: inherit;
+      outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
+    }
+    input[type="time"].dark-time:focus { border-color: var(--accent); }
+    input[type="time"].dark-time::-webkit-calendar-picker-indicator { filter: invert(.6); cursor: pointer; }
+
+    /* ── AUTH SCREEN ── */
+    #authScreen {
+      position: fixed; inset: 0;
+      background: var(--bg-primary);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    #authScreen.sb-hidden { display: none; }
+    .auth-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 28px 28px;
+      width: 100%; max-width: 360px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .auth-logo {
+      font-size: 24px; font-weight: 800; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ff9a00, #ff4500, #ff6b00);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; text-align: center; margin-bottom: 2px;
+    }
+    .auth-sub {
+      font-size: 13px; color: var(--text-secondary);
+      text-align: center; margin-bottom: 8px;
+    }
+    .auth-msg {
+      font-size: 13px; padding: 10px 12px;
+      border-radius: var(--radius-sm); text-align: center;
+      display: none;
+    }
+    .auth-msg.error  { display:block; background:rgba(232,69,69,0.1); color:#e84545; border:1px solid rgba(232,69,69,0.25); }
+    .auth-msg.info   { display:block; background:var(--success-dim); color:var(--success); border:1px solid rgba(46,168,76,0.2); }
+    .auth-divider {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--text-muted); font-size: 12px; margin: 2px 0;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── FRIENDS TAB ── */
+    .friends-seg {
+      display: flex; gap: 3px; background: var(--bg-secondary);
+      border: 1px solid var(--border); border-radius: 10px; padding: 3px;
+      margin-bottom: 20px;
+    }
+    .fseg-btn {
+      flex: 1; padding: 7px 4px; border: none; background: transparent;
+      border-radius: 7px; font-size: 13px; font-weight: 600;
+      color: var(--text-secondary); cursor: pointer; transition: all .18s;
+      font-family: inherit; white-space: nowrap;
+    }
+    .fseg-btn.active {
+      background: var(--bg-card); color: var(--text-primary);
+      box-shadow: 0 1px 4px rgba(0,0,0,.35);
+    }
+    .fseg-pane { display: none; }
+    .fseg-pane.active { display: block; }
+
+    /* Feed */
+    .feed-wrap { display: flex; flex-direction: column; gap: 10px; }
+
+    .feed-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 18px;
+      display: flex; align-items: center; gap: 14px;
+      transition: border-color 0.18s, background 0.18s;
+      position: relative; touch-action: manipulation;
+    }
+    .feed-card:hover { border-color: var(--border-accent); background: var(--bg-card-hover); }
+
+    .feed-avatar {
+      width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+      background: var(--bg-secondary); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700; color: var(--accent); overflow: hidden;
+    }
+
+    .feed-body { flex: 1; min-width: 0; }
+    .feed-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .feed-habit { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-top: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feed-footer { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .feed-xp-badge {
+      font-size: 12px; font-weight: 700; color: var(--accent);
+      background: var(--accent-dim); border: 1px solid var(--border-accent);
+      border-radius: 6px; padding: 2px 8px;
+    }
+    .feed-time-lbl { font-size: 11px; color: var(--text-muted); }
+
+    .feed-streak {
+      flex-shrink: 0; display: flex; flex-direction: column;
+      align-items: center; gap: 1px; min-width: 58px;
+    }
+    .feed-streak-flame { font-size: 42px; line-height: 1; }
+    .feed-streak-num { font-size: 22px; font-weight: 900; color: #ff7a20; line-height: 1.1; }
+    .feed-streak-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .feed-streak.gold .feed-streak-flame {
+      filter: sepia(1) saturate(4) hue-rotate(-10deg) brightness(1.15) drop-shadow(0 0 8px rgba(240,192,64,0.7));
+    }
+    .feed-streak.gold .feed-streak-num { color: var(--gold); }
+    .feed-streak.gold .feed-streak-lbl { color: rgba(240,192,64,0.6); }
+
+    /* Badge feed cards */
+    .feed-card.badge-card {
+      border-color: rgba(240,192,64,0.28);
+      background: rgba(240,192,64,0.04);
+    }
+    .feed-card.badge-card:hover {
+      border-color: rgba(240,192,64,0.5);
+      background: rgba(240,192,64,0.08);
+    }
+    .feed-badge-label {
+      font-size: 10px; font-weight: 700; color: var(--gold);
+      text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 3px;
+    }
+    .feed-badge-icon-lg { font-size: 42px; line-height: 1; flex-shrink: 0; }
+
+    /* Feed Reactions */
+    .feed-heart-lbl { font-size: 12px; color: var(--text-muted); margin-left: auto; }
+    .feed-heart-lbl.liked { color: #e0245e; font-weight: 600; }
+    @keyframes heartBurst {
+      0%   { transform: translate(-50%,-50%) scale(0.3); opacity: 1; }
+      55%  { transform: translate(-50%,-50%) scale(1.5); opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(1.2); opacity: 0; }
+    }
+    .heart-burst {
+      position: absolute; top: 50%; left: 50%;
+      font-size: 48px; pointer-events: none; user-select: none;
+      animation: heartBurst 0.65s ease-out forwards; z-index: 10;
+    }
+
+    /* legacy avatar class used in friends list */
+    .f-avatar {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: var(--accent);
+    }
+
+    /* Friends list */
+    .friend-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 14px;
+      cursor: pointer; transition: all .18s;
+    }
+    .friend-card:hover { background: var(--bg-card-hover); border-color: var(--border-accent); }
+    .friend-card.all-done { border-color: rgba(46,168,76,.35); box-shadow: 0 0 14px rgba(46,168,76,.1); }
+    .f-info { flex: 1; min-width: 0; }
+    .f-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .f-lvl { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .f-streak { font-size: 14px; font-weight: 700; color: var(--text-primary); flex-shrink: 0; }
+    .f-prog-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+    .f-prog-fill { height: 100%; background: var(--success); border-radius: 2px; }
+    .f-prog-lbl { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Find friends */
+    .find-code-box {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .find-code-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); margin-bottom: 5px; }
+    .find-code-val { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: 3px; }
+    .find-results-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 18px; }
+    .find-result {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 0; border-bottom: 1px solid var(--border);
+    }
+    .find-result:last-child { border-bottom: none; }
+
+    /* Friend profile modal */
+    .fp-header { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
+    .fp-avatar {
+      width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+      background: var(--bg-secondary); border: 2px solid var(--border-accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: var(--accent);
+    }
+    .fp-name { font-size: 17px; font-weight: 800; color: var(--text-primary); }
+    .fp-meta { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+    .fp-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .fp-badge {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 8px; padding: 5px 10px; font-size: 12px; color: var(--text-secondary);
+    }
+    .fp-week-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; margin-top: 10px; margin-bottom: 8px; }
+    .fp-week-cell { aspect-ratio: 1; border-radius: 5px; border: 1px solid transparent; }
+
+    /* ── PROFILE BUTTON (header) ── */
+    .profile-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--bg-card); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 13px; font-weight: 700;
+      color: var(--text-secondary); flex-shrink: 0; overflow: hidden;
+      transition: border-color 0.18s, background 0.18s, color 0.18s;
+      user-select: none; padding: 0;
+    }
+    .profile-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .profile-btn.open  { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+    .profile-btn img   { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+
+    /* ── NOTIFICATION BELL ── */
+    .notif-bell-btn {
+      position: relative; width: 34px; height: 34px; border-radius: 50%;
+      background: var(--bg-card); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 15px; flex-shrink: 0;
+      transition: border-color 0.18s; padding: 0;
+    }
+    .notif-bell-btn:hover { border-color: var(--border-accent); }
+    .notif-badge {
+      position: absolute; top: -4px; right: -4px;
+      background: var(--danger); color: #fff;
+      font-size: 9px; font-weight: 800; border-radius: 10px;
+      padding: 1px 4px; min-width: 14px; text-align: center; line-height: 1.5;
+      display: none;
+    }
+    .notif-panel-bg { position: fixed; inset: 0; z-index: 199; display: none; }
+    .notif-panel {
+      position: fixed; top: 58px; right: 12px; z-index: 200;
+      width: min(320px, calc(100vw - 24px)); max-height: 460px; overflow-y: auto;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: 0 8px 32px rgba(0,0,0,.6);
+      display: none;
+    }
+    .notif-panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0;
+      background: var(--bg-card); z-index: 1;
+    }
+    .notif-panel-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item.unread { background: var(--accent-dim); }
+    .notif-icon { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+    .notif-text { color: var(--text-primary); line-height: 1.45; }
+    .notif-when { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── LIKED-BY POPOVER ── */
+    .liked-by-popover {
+      position: fixed; z-index: 400;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 6px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.55);
+      min-width: 140px; max-width: 220px; display: none;
+    }
+    .liked-by-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px; font-size: 13px; font-weight: 500;
+      color: var(--text-primary); border-radius: 6px;
+    }
+    .liked-by-avatar {
+      width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; color: var(--accent); overflow: hidden;
+    }
+
+    /* ── PROFILE DRAWER ── */
+    .profile-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      z-index: 300; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .profile-overlay.open { opacity: 1; pointer-events: all; }
+    .profile-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: min(440px, 100vw);
+      background: var(--bg-secondary); border-left: 1px solid var(--border);
+      z-index: 301; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .profile-drawer.open { transform: translateX(0); }
+    .profile-drawer-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--bg-secondary); z-index: 1;
+    }
+    .profile-drawer-title { font-size: 16px; font-weight: 700; }
+    .profile-drawer-close {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--bg-card); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 16px; color: var(--text-secondary);
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .profile-drawer-close:hover { color: var(--text-primary); background: var(--bg-card-hover); }
+    .profile-drawer-body { padding: 20px; }
+  </style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen" class="sb-hidden">
+  <div class="auth-card">
+    <div class="auth-logo">🔥 Ignite</div>
+    <div class="auth-sub">Sign in to sync your streaks across devices</div>
+    <div class="auth-msg" id="authMsg"></div>
+    <input class="finput" id="authEmail" type="email" placeholder="Email"
+      autocomplete="email" onkeydown="authKey(event)">
+    <input class="finput" id="authPass" type="password" placeholder="Password"
+      autocomplete="current-password" onkeydown="authKey(event)">
+    <button class="btn btn-primary" id="loginBtn" onclick="handleLogin()">Log In</button>
+    <div class="auth-divider">or</div>
+    <button class="btn btn-ghost" id="signupBtn" onclick="handleSignup()">Create Account</button>
+  </div>
+</div>
+
+<!-- NOTIFICATION PERMISSION BANNER -->
+<div id="notifBanner" class="notif-banner sb-hidden">
+  <span style="font-size:20px;flex-shrink:0;">🔔</span>
+  <div style="flex:1;min-width:0;">
+    <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Enable daily reminders?</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-top:1px;">Get nudged if your habits aren't done for the day</div>
+  </div>
+  <button class="btn btn-primary" onclick="requestNotifPermission()" style="font-size:12px;padding:6px 14px;flex-shrink:0;">Enable</button>
+  <button class="btn btn-ghost" onclick="dismissNotifBanner()" style="font-size:12px;padding:6px 8px;flex-shrink:0;">✕</button>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">Ignite</div>
+  <div class="header-xp">
+    <div class="level-badge" id="hLevel">Lv.1 Initiate</div>
+    <div class="xp-track">
+      <div class="xp-track-labels">
+        <span id="hXpCur">0 XP</span>
+        <span id="hXpNext">500 XP</span>
+      </div>
+      <div class="xp-bar"><div class="xp-bar-fill" id="hXpFill" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="header-pills">
+    <div class="pill" id="streakPill">
+      <span>🔥</span><span class="v" id="hStreak">0</span><span class="l">streak</span>
+    </div>
+    <div class="pill">
+      <span>⚡</span><span class="v" id="hXpTotal">0</span><span class="l">xp</span>
+    </div>
+  </div>
+  <button class="notif-bell-btn" id="notifBellBtn" onclick="openNotifPanel()" title="Notifications">
+    🔔<span class="notif-badge" id="notifBadge"></span>
+  </button>
+  <button class="profile-btn" id="profileNavBtn" onclick="openProfileDrawer()" title="Profile &amp; Settings">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v1h20v-1c0-3.33-6.67-5-10-5z"/></svg>
+  </button>
+</header>
+
+<!-- NOTIFICATION PANEL -->
+<div id="notifPanelBg" class="notif-panel-bg" onclick="closeNotifPanel()"></div>
+<div id="notifPanel" class="notif-panel">
+  <div class="notif-panel-head">
+    <div class="notif-panel-title">Notifications</div>
+    <button class="btn btn-ghost" onclick="clearNotifs()" style="font-size:11px;padding:4px 10px;">Clear all</button>
+  </div>
+  <div id="notifList"></div>
+</div>
+
+<!-- LIKED-BY POPOVER -->
+<div id="likedByPopover" class="liked-by-popover"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-tab active" data-tab="today">Today</div>
+  <div class="nav-tab" data-tab="calendar">Calendar</div>
+  <div class="nav-tab" data-tab="friends">Friends<span class="nav-tab-badge" id="friendsReqBadge" style="display:none;"></span></div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- TODAY -->
+  <div class="tab-pane active" id="tab-today">
+    <div class="progress-card" id="progressCard">
+      <div class="ring-wrap">
+        <svg class="ring-svg" width="68" height="68" viewBox="0 0 68 68">
+          <circle class="ring-bg" cx="34" cy="34" r="29"/>
+          <circle class="ring-fill" id="ringFill" cx="34" cy="34" r="29"
+            stroke-dasharray="182.2" stroke-dashoffset="182.2"/>
+        </svg>
+        <div class="ring-text" id="ringText">0/0</div>
+      </div>
+      <div class="progress-info">
+        <div class="progress-title" id="pTitle">Start your day</div>
+        <div class="progress-sub" id="pSub">Complete habits to earn XP and build streaks</div>
+      </div>
+      <div class="progress-xp">
+        <div class="num" id="pXp">0</div>
+        <div class="lbl">XP today</div>
+      </div>
+    </div>
+
+    <div id="powerupBar"></div>
+
+    <!-- STREAK HERO -->
+    <div class="streak-hero sh-unlit" id="streakHero">
+      <div class="sh-main">
+        <span class="sh-flame">🔥</span>
+        <div class="sh-number" id="shNumber">0</div>
+      </div>
+      <div class="sh-label">Day Streak</div>
+      <div class="sh-status" id="shStatus">Complete a habit today to start your streak</div>
+    </div>
+
+    <div class="section-head">
+      <div>
+        <div class="section-title" id="todayHeading">Today's Habits</div>
+        <div class="section-sub" id="todayDate"></div>
+      </div>
+      <button class="btn btn-primary" onclick="openAdd()">+ Add Habit</button>
+    </div>
+
+    <div class="habits" id="habitList"></div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="tab-pane" id="tab-calendar">
+    <div class="cal-head">
+      <div>
+        <div class="section-title" id="calMonthTitle"></div>
+        <div class="section-sub" id="calSub"></div>
+      </div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+        <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+      </div>
+    </div>
+    <div class="cal-wrap">
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend">
+        <div class="leg"><div class="leg-dot" style="background:rgba(240,192,64,0.5)"></div>Perfect day</div>
+        <div class="leg"><div class="leg-dot" style="background:rgba(46,168,76,0.4)"></div>All done</div>
+        <div class="leg"><div class="leg-dot" style="background:rgba(0,212,255,0.3)"></div>Partial</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--bg-secondary); border:1px solid var(--border)"></div>Missed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENTS -->
+  <!-- FRIENDS -->
+  <div class="tab-pane" id="tab-friends">
+    <div class="section-head" style="margin-bottom:16px">
+      <div>
+        <div class="section-title">Friends</div>
+        <div class="section-sub">See what your circle is up to</div>
+      </div>
+      <button class="btn btn-ghost" onclick="refreshFriendsSeg()"
+        style="font-size:18px;padding:6px 10px;line-height:1;" title="Refresh">↻</button>
+    </div>
+
+    <div class="friends-seg">
+      <button class="fseg-btn active" data-seg="feed"    onclick="switchFriendSeg('feed')">Feed</button>
+      <button class="fseg-btn"        data-seg="friends" onclick="switchFriendSeg('friends')">Friends</button>
+      <button class="fseg-btn"        data-seg="find"    onclick="switchFriendSeg('find')">Find</button>
+    </div>
+
+    <!-- FEED -->
+    <div id="fseg-feed" class="fseg-pane active">
+      <div class="feed-wrap" id="feedList"></div>
+    </div>
+
+    <!-- FRIENDS LIST -->
+    <div id="fseg-friends" class="fseg-pane">
+      <div id="friendsList"></div>
+    </div>
+
+    <!-- FIND FRIENDS -->
+    <div id="fseg-find" class="fseg-pane">
+      <div class="find-code-box">
+        <div>
+          <div class="find-code-lbl">Your friend code</div>
+          <div class="find-code-val" id="friendCode">IGN-····</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn btn-ghost" id="toggleCodeBtn" onclick="toggleFriendCode()"
+            style="font-size:11px;padding:6px 12px;">Reveal</button>
+          <button class="btn btn-ghost" onclick="copyFriendCode(event)"
+            style="font-size:11px;padding:6px 12px;">Copy</button>
+        </div>
+      </div>
+      <div class="fgrp" style="margin-bottom:14px;">
+        <input class="finput" id="friendSearchIn" type="text"
+          placeholder="Search by name or friend code…" oninput="renderFindResults()">
+      </div>
+      <div class="find-results-wrap" id="findResultsWrap"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- PROFILE OVERLAY -->
+<div class="profile-overlay" id="profileOverlay" onclick="closeProfileDrawer()"></div>
+
+<!-- PROFILE DRAWER -->
+<div class="profile-drawer" id="profileDrawer">
+  <div class="profile-drawer-head">
+    <span class="profile-drawer-title">Profile &amp; Settings</span>
+    <div class="profile-drawer-close" onclick="closeProfileDrawer()">✕</div>
+  </div>
+  <div class="profile-drawer-body">
+
+    <div class="p-section profile-id-card">
+      <div class="pid-avatar" id="pidAvatar"></div>
+      <div class="pid-body">
+        <div class="pid-name empty" id="pidName">Add your name</div>
+        <div class="pid-title" id="pidTitle"></div>
+        <div class="pid-bio empty" id="pidBio">No bio yet — tell us about yourself!</div>
+        <div class="pid-featured-badges" id="pidFeaturedBadges"></div>
+      </div>
+      <button class="btn btn-ghost" onclick="openProfileEdit()" style="flex-shrink:0;font-size:12px;padding:6px 12px;">Edit Profile</button>
+    </div>
+
+    <div class="p-section">
+      <div class="p-section-title">Statistics</div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+
+    <div class="p-section">
+      <div class="p-section-title" style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span>Achievements</span>
+        <span id="achSub" style="font-size:11px;font-weight:400;color:var(--text-muted);"></span>
+      </div>
+      <div class="badge-grid" id="badgeGrid"></div>
+    </div>
+
+    <div class="p-section">
+      <div class="p-section-title">Power-Ups &amp; Inventory</div>
+      <div class="powerup-row" id="puGrid"></div>
+    </div>
+
+    <div class="p-section">
+      <div class="p-section-title">Themes</div>
+      <div class="theme-row" id="themeRow"></div>
+    </div>
+
+    <div class="p-section">
+      <div class="p-section-title">Daily Reminder</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div>
+          <div style="font-size:14px;font-weight:500;color:var(--text-primary);">Remind me daily at</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">Skipped automatically if all habits are already done</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+          <input type="time" id="reminderTime" class="dark-time" value="09:00" onchange="saveReminder()">
+          <label class="t-switch">
+            <input type="checkbox" id="reminderEnabled" onchange="saveReminder()">
+            <span class="t-track"></span>
+          </label>
+        </div>
+      </div>
+      <div id="notifPermMsg" class="sb-hidden"
+        style="font-size:12px;margin-top:10px;padding:8px 10px;border-radius:var(--radius-sm);
+               background:rgba(212,147,10,0.1);color:var(--warning);border:1px solid rgba(212,147,10,0.2);">
+        Notifications are blocked. Enable them in your browser or device settings to use this feature.
+      </div>
+    </div>
+
+    <div class="p-section">
+      <div class="p-section-title">Level Roadmap</div>
+      <div class="roadmap" id="roadmapEl"></div>
+    </div>
+
+    <div class="p-section" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:18px;border-top:1px solid var(--border);">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:.5px;text-transform:uppercase;">Account</div>
+        <div id="accountEmail" style="font-size:13px;color:var(--text-muted);margin-top:3px;"></div>
+      </div>
+      <button class="btn btn-ghost" onclick="handleLogout()"
+        style="font-size:12px;padding:6px 14px;color:var(--danger);border-color:rgba(232,69,69,0.25);flex-shrink:0;">
+        Sign Out
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD HABIT MODAL -->
+<div class="modal-bg" id="addModal" onclick="handleBgClick(event)">
+  <div class="modal">
+    <div class="modal-title">New Habit</div>
+    <div class="fgrp">
+      <label class="flabel">Habit Name</label>
+      <input class="finput" id="hNameIn" placeholder="e.g. Morning run, Journal, Meditate…"
+        oninput="updateXpHint()" onkeydown="modalKey(event)" maxlength="80" autocomplete="off">
+    </div>
+    <div class="fgrp">
+      <label class="flabel">Difficulty</label>
+      <div class="diff-seg" id="hDiffSeg">
+        <button class="diff-btn" data-diff="light"    onclick="selectDiff('h','light')">🟢 Light</button>
+        <button class="diff-btn active" data-diff="moderate" onclick="selectDiff('h','moderate')">🟡 Moderate</button>
+        <button class="diff-btn" data-diff="hard"     onclick="selectDiff('h','hard')">🔴 Hard</button>
+      </div>
+    </div>
+    <div class="xp-hint" id="xpHint">
+      <span>⚡</span><span id="xpHintText">Type a name to see estimated XP</span>
+    </div>
+    <div class="form-row">
+      <button class="btn btn-ghost" onclick="closeAdd()">Cancel</button>
+      <button class="btn btn-primary" onclick="commitAdd()">Add Habit</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE EDIT MODAL -->
+<div class="modal-bg" id="profileModal" onclick="handleProfileBgClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="profileModalTitle">Edit Profile</div>
+
+    <!-- Normal form state -->
+    <div id="profileFormArea">
+      <div class="pic-upload-wrap" id="picUploadWrap" onclick="document.getElementById('picFileIn').click()">
+        <div class="pic-upload-overlay">📷</div>
+      </div>
+      <div class="pic-upload-hint">Click photo to upload</div>
+      <input type="file" id="picFileIn" accept="image/*" style="display:none" onchange="handlePicUpload(event)">
+      <div class="fgrp">
+        <label class="flabel">Display Name</label>
+        <input class="finput" id="pNameIn" placeholder="Your name…" maxlength="40" autocomplete="off">
+      </div>
+      <div class="fgrp">
+        <label class="flabel">Bio <span style="color:var(--text-muted);font-weight:400;">(optional · 160 chars)</span></label>
+        <textarea class="finput" id="pBioIn" placeholder="Tell us about yourself…" maxlength="160" rows="3" style="resize:none;line-height:1.55"></textarea>
+      </div>
+      <div class="form-row">
+        <button class="btn btn-ghost" onclick="closeProfileEdit()">Cancel</button>
+        <button class="btn btn-primary" onclick="commitProfileEdit()">Save</button>
+      </div>
+    </div>
+
+    <!-- Crop state -->
+    <div id="cropArea" style="display:none">
+      <div class="crop-container" id="cropContainer">
+        <img id="cropImg" draggable="false" alt="">
+      </div>
+      <div class="crop-zoom-row">
+        <span class="crop-zoom-lbl">−</span>
+        <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" oninput="onCropZoom(this.value)">
+        <span class="crop-zoom-lbl">+</span>
+      </div>
+      <div class="crop-hint">Drag to reposition · Slider or scroll to zoom</div>
+      <div class="form-row">
+        <button class="btn btn-ghost" onclick="cancelCrop()">← Back</button>
+        <button class="btn btn-primary" onclick="applyCrop()">Apply Crop</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT HABIT MODAL -->
+<div class="modal-bg" id="editModal" onclick="handleEditBgClick(event)">
+  <div class="modal">
+    <div class="modal-title">Edit Habit</div>
+    <div class="fgrp">
+      <label class="flabel">Habit Name</label>
+      <input class="finput" id="eNameIn" placeholder="Habit name…"
+        oninput="updateEditXpHint()" onkeydown="editModalKey(event)" maxlength="80" autocomplete="off">
+    </div>
+    <div class="fgrp">
+      <label class="flabel">Difficulty</label>
+      <div class="diff-seg" id="eDiffSeg">
+        <button class="diff-btn" data-diff="light"    onclick="selectDiff('e','light')">🟢 Light</button>
+        <button class="diff-btn active" data-diff="moderate" onclick="selectDiff('e','moderate')">🟡 Moderate</button>
+        <button class="diff-btn" data-diff="hard"     onclick="selectDiff('e','hard')">🔴 Hard</button>
+      </div>
+    </div>
+    <div class="xp-hint">
+      <span>⚡</span><span id="eXpHintText">XP per completion</span>
+    </div>
+    <div class="form-row">
+      <button class="btn btn-ghost" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-primary" onclick="commitEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- FRIEND PROFILE MODAL -->
+<div class="modal-bg" id="friendModal" onclick="if(event.target.id==='friendModal')closeFriendModal()">
+  <div class="modal">
+    <div class="fp-header">
+      <div class="fp-avatar" id="fpAvatar"></div>
+      <div>
+        <div class="fp-name" id="fpName"></div>
+        <div class="fp-meta" id="fpMeta"></div>
+        <div id="fpCode" style="font-size:11px;color:var(--text-muted);margin-top:4px;letter-spacing:0.5px;font-family:monospace;"></div>
+      </div>
+    </div>
+    <div id="fpBio" style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-bottom:16px;"></div>
+    <div class="p-section-title">Featured Badges</div>
+    <div class="fp-badges" id="fpBadges"></div>
+    <div class="p-section-title" style="margin-top:16px;">Activity — Last 28 Days</div>
+    <div id="fpCalGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;"></div>
+    <div style="margin-top:24px;display:flex;justify-content:space-between;align-items:center;">
+      <div id="fpUnfriendWrap"></div>
+      <button class="btn btn-ghost" onclick="closeFriendModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEVEL UP OVERLAY -->
+<div class="lvlup-bg" id="lvlupBg">
+  <div class="lvlup-card">
+    <div class="lvlup-icon" id="luIcon">✨</div>
+    <div class="lvlup-tag">Level Up!</div>
+    <div class="lvlup-name" id="luName">Apprentice</div>
+    <div class="lvlup-unlock" id="luUnlock"></div>
+    <button class="btn btn-primary" onclick="closeLvlUp()" style="padding:12px 36px;font-size:15px;">Continue</button>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// SUPABASE CLIENT
+// ═══════════════════════════════════════════
+
+const _sb = supabase.createClient(
+  'https://mafyuufmowcdddqwxvpf.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZnl1dWZtb3djZGRkcXd4dnBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2ODYwMjUsImV4cCI6MjA5MzI2MjAyNX0.vgkmB6VZpkt_KB8GoVNL-cv6wTU3ldlHREZRkTaWFW4'
+);
+let _sbUser = null;
+
+// ═══════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════
+
+const LEVELS = [
+  { n:1,  name:'Initiate',    xp:0,      icon:'🌱', unlock: null },
+  { n:2,  name:'Apprentice',  xp:500,    icon:'⚡', unlock: 'Your journey begins. Keep the momentum.' },
+  { n:3,  name:'Seeker',      xp:1500,   icon:'🔍', unlock: 'Unlocked: <strong>Streak Freeze</strong>' },
+  { n:4,  name:'Challenger',  xp:3500,   icon:'⚔️', unlock: 'Unlocked: <strong>+1 Habit Slot</strong> (6 total)' },
+  { n:5,  name:'Devoted',     xp:7000,   icon:'🎯', unlock: 'Unlocked: <strong>XP Surge</strong> — 2× XP once per week' },
+  { n:6,  name:'Warrior',     xp:12000,  icon:'🛡️', unlock: 'Unlocked: Badge <strong>"Iron Will"</strong>' },
+  { n:7,  name:'Guardian',    xp:20000,  icon:'🗡️', unlock: 'Unlocked: Theme <strong>Midnight</strong>' },
+  { n:8,  name:'Adept',       xp:32000,  icon:'🌙', unlock: 'Unlocked: <strong>+1 Habit Slot</strong> (7 total)' },
+  { n:9,  name:'Expert',      xp:50000,  icon:'💎', unlock: 'Unlocked: Title <strong>"The Persistent"</strong>' },
+  { n:10, name:'Master',      xp:75000,  icon:'🏆', unlock: 'Unlocked: Badge <strong>"Century Mark"</strong>' },
+  { n:11, name:'Elite',       xp:110000, icon:'👑', unlock: 'Unlocked: Theme <strong>Crimson</strong>' },
+  { n:12, name:'Champion',    xp:160000, icon:'🌟', unlock: 'Unlocked: <strong>+1 Habit Slot</strong> (8 total)' },
+  { n:13, name:'Legend',      xp:225000, icon:'⭐', unlock: 'Unlocked: Title <strong>"The Legendary"</strong>' },
+  { n:14, name:'Mythic',      xp:310000, icon:'🔱', unlock: 'Unlocked: Badge <strong>"Mythic Soul"</strong>' },
+  { n:15, name:'Ascendant',   xp:420000, icon:'🌌', unlock: 'Unlocked: Theme <strong>Aurora</strong>' },
+  { n:16, name:'Prestige',    xp:550000, icon:'✨', unlock: '<strong>PRESTIGE MODE ACTIVATED</strong> — You have transcended all limits.' },
+];
+
+const LEVEL_UNLOCKS = {
+  3:  { type:'freezeSlot' },
+  4:  { type:'habitSlots', val:6 },
+  5:  { type:'xpSurge' },
+  6:  { type:'badge', id:'iron_will' },
+  7:  { type:'theme', id:'midnight' },
+  8:  { type:'habitSlots', val:7 },
+  9:  { type:'title', id:'the_persistent' },
+  10: { type:'badge', id:'century_mark' },
+  11: { type:'theme', id:'crimson' },
+  12: { type:'habitSlots', val:8 },
+  13: { type:'title', id:'the_legendary' },
+  14: { type:'badge', id:'mythic_soul' },
+  15: { type:'theme', id:'aurora' },
+  16: { type:'prestige' },
+};
+
+const BADGES = [
+  { id:'first_habit',     icon:'🌱', name:'First Step',        desc:'Created your first habit' },
+  { id:'iron_will',       icon:'🛡️', name:'Iron Will',         desc:'Unlocked at Level 6 (Warrior)' },
+  { id:'century_mark',   icon:'💯', name:'Century Mark',      desc:'Unlocked at Level 10 (Master)' },
+  { id:'mythic_soul',    icon:'🔱', name:'Mythic Soul',       desc:'Unlocked at Level 14 (Mythic)' },
+  { id:'prestige_mode',  icon:'✨', name:'The Prestige',      desc:'Reached the Prestige level' },
+  { id:'streak_7',        icon:'🔥', name:'Week Warrior',       desc:'Maintain a 7-day streak' },
+  { id:'streak_14',       icon:'🌊', name:'Fortnight Flow',    desc:'Maintain a 14-day streak' },
+  { id:'streak_30',       icon:'📅', name:'Monthly Devotion',  desc:'Maintain a 30-day streak' },
+  { id:'streak_50',       icon:'🏆', name:'Fifty Strong',      desc:'Maintain a 50-day streak' },
+  { id:'streak_100',      icon:'💎', name:'Centurion',         desc:'Maintain a 100-day streak' },
+  { id:'super_first',     icon:'⭐', name:'Perfectionist',     desc:'Complete every habit in a single day' },
+  { id:'super_7',         icon:'👑', name:'Total Dominance',   desc:'7 days of perfect habit completion' },
+  { id:'super_30',        icon:'🌙', name:'Lunar Legend',      desc:'30 days of perfect habit completion' },
+  { id:'total_100',       icon:'📊', name:'Century Club',      desc:'Complete 100 habits total' },
+  { id:'total_500',       icon:'🚀', name:'High Achiever',     desc:'Complete 500 habits total' },
+  { id:'xp_1000',         icon:'🌟', name:'XP Rising',         desc:'Earn 1,000 total XP' },
+  { id:'xp_5000',         icon:'💫', name:'XP Veteran',        desc:'Earn 5,000 total XP' },
+  { id:'five_habits',     icon:'🗂️', name:'Fully Loaded',      desc:'Have 5 or more habits at once' },
+  { id:'surge_rider',     icon:'⚡', name:'Surge Rider',       desc:'Activate XP Surge for the first time' },
+  { id:'social_butterfly',icon:'🦋', name:'Social Butterfly',  desc:'Accept your first friend request' },
+];
+
+const THEMES = [
+  { id:'default',  name:'Cyber',    emoji:'💠', color:'#00d4ff', unlockLvl:1 },
+  { id:'midnight', name:'Midnight', emoji:'🌙', color:'#818cf8', unlockLvl:7 },
+  { id:'crimson',  name:'Crimson',  emoji:'🔴', color:'#ff4d6d', unlockLvl:11 },
+  { id:'aurora',   name:'Aurora',   emoji:'🌌', color:'#00ffcc', unlockLvl:15 },
+];
+
+const TITLES = [
+  { id:'the_persistent', name:'The Persistent', lvl:9 },
+  { id:'the_legendary',  name:'The Legendary',  lvl:13 },
+  { id:'the_prestige',   name:'The Prestige',   lvl:16 },
+];
+
+const XP_WORDS = {
+  hard:   { w:['code','coding','program','algorithm','develop','build','create','design','learn','study','practice','train','workout','exercise','marathon','master','advance','challenge','intense','heavy','sprint','lift','compete','compose','architect'], xp:80 },
+  medium: { w:['meditate','meditation','journal','journaling','read','reading','write','writing','language','vocabulary','math','music','instrument','draw','drawing','cook','cooking','clean','organize','plan','yoga','stretch','bike','cycling','swim','swimming','run','running','podcast'], xp:50 },
+  easy:   { w:['walk','water','drink','sleep','wake','vitamins','vitamin','floss','brush','sunscreen','moisturize','hydrate','breathe','gratitude','step','stretch'], xp:25 },
+};
+
+const SUPER_BONUS = 50;
+const DEFAULT_SLOTS = 5;
+const CIRC = 2 * Math.PI * 29; // ring circumference r=29
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+
+let S = defaultState();
+
+function defaultState() {
+  return {
+
+    reminderEnabled: false,
+    reminderTime: '09:00',
+    reminderLastNotified: null,
+    profileName: '',
+    profileBio: '',
+    profilePic: null,
+    habits: [],
+    dailyLog: {},
+    xp: 0,
+    streak: 0,
+    lastActiveDate: null,     // last date with ≥1 habit completed
+    lastCheckedDate: null,    // last date app was opened (for reset)
+    superDays: 0,
+    totalDone: 0,
+    xpToday: 0,
+    xpTodayDate: null,
+    unlocks: {
+      streakShield: false,
+      freezeSlots: 0,
+      xpSurgeOn: false,
+      xpSurgeLastUsed: null,
+      xpSurgeExpires: null,
+      habitSlots: DEFAULT_SLOTS,
+      badges: [],
+      themes: ['default'],
+      theme: 'default',
+      titles: [],
+      title: null,
+      prestige: false,
+    },
+    friends: [],
+    friendRequests: [],
+    socialCode: null,
+    featuredBadges: [],
+  };
+}
+
+// ═══════════════════════════════════════════
+// PERSISTENCE
+// ═══════════════════════════════════════════
+
+function save() {
+  localStorage.setItem('hc_v1', JSON.stringify(S));
+  if (_sbUser) syncToSupabase();
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('hc_v1');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    // Merge with defaults to handle new fields
+    S = { ...defaultState(), ...d };
+    S.unlocks = { ...defaultState().unlocks, ...(d.unlocks || {}) };
+    // Ensure arrays
+    if (!Array.isArray(S.habits)) S.habits = [];
+    if (!S.dailyLog) S.dailyLog = {};
+    if (!Array.isArray(S.unlocks.badges)) S.unlocks.badges = [];
+    if (!Array.isArray(S.unlocks.themes)) S.unlocks.themes = ['default'];
+    if (!Array.isArray(S.unlocks.titles)) S.unlocks.titles = [];
+    if (!Array.isArray(S.friends)) S.friends = [];
+    if (!Array.isArray(S.friendRequests)) S.friendRequests = [];
+    if (!S.socialCode) S.socialCode = 'IGN-' + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
+  } catch(e) { console.error('Load failed', e); }
+}
+
+// ═══════════════════════════════════════════
+// DATE HELPERS
+// ═══════════════════════════════════════════
+
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+}
+
+function dateMinus(dateStr, days) {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() - days);
+  return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+}
+
+function p2(n) { return String(n).padStart(2,'0'); }
+
+function fmtDate(ds) {
+  return new Date(ds + 'T12:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+}
+
+function daysInMonth(y, m) { return new Date(y, m+1, 0).getDate(); }
+function firstDow(y, m)    { return new Date(y, m, 1).getDay(); }
+
+// ═══════════════════════════════════════════
+// DAILY RESET
+// ═══════════════════════════════════════════
+
+function dailyReset() {
+  const t = today();
+  if (S.lastCheckedDate === t) return;
+
+  // Reset today XP counter
+  if (S.xpTodayDate !== t) {
+    S.xpToday = 0;
+    S.xpTodayDate = t;
+  }
+
+  // Streak check: did we miss any days?
+  if (S.lastActiveDate && S.lastActiveDate !== t) {
+    const yesterday = dateMinus(t, 1);
+    if (S.lastActiveDate < yesterday) {
+      // Missed at least one day
+      if (S.streak > 0) {
+        if (S.unlocks.streakShield) {
+          S.unlocks.streakShield = false;
+          // Show toast after render
+          setTimeout(() => toast('🛡️ Streak Shield saved your streak!', 'warn'), 400);
+        } else {
+          setTimeout(() => { SFX.streakBroken(); toast(`💔 ${S.streak}-day streak broken`, 'warn'); }, 400);
+          S.streak = 0;
+        }
+      }
+    }
+  }
+
+  S.lastCheckedDate = t;
+  save();
+}
+
+// ═══════════════════════════════════════════
+// LOG HELPERS
+// ═══════════════════════════════════════════
+
+function getLog(date) {
+  if (!S.dailyLog[date]) S.dailyLog[date] = { done:[], super:false, xp:0, hxp:{} };
+  return S.dailyLog[date];
+}
+
+function todayLog() { return getLog(today()); }
+
+// ═══════════════════════════════════════════
+// XP & LEVELS
+// ═══════════════════════════════════════════
+
+function estimateXp(name) {
+  const lower = name.toLowerCase();
+  let best = 35;
+  for (const tier of ['hard','medium','easy']) {
+    for (const w of XP_WORDS[tier].w) {
+      if (lower.includes(w) && XP_WORDS[tier].xp > best) best = XP_WORDS[tier].xp;
+    }
+  }
+  return best;
+}
+
+function currentLevel() {
+  let lv = 1;
+  for (const l of LEVELS) { if (S.xp >= l.xp) lv = l.n; }
+  return lv;
+}
+
+function levelData(n) { return LEVELS.find(l => l.n === n) || LEVELS[0]; }
+
+function xpProgress() {
+  const lv = currentLevel();
+  const cur = levelData(lv);
+  const nxt = levelData(lv + 1);
+  if (!nxt) return { pct:100, xpIn: S.xp - cur.xp, xpFor: 1, next: null };
+  const xpIn  = S.xp - cur.xp;
+  const xpFor = nxt.xp - cur.xp;
+  return { pct: Math.min(100, (xpIn / xpFor) * 100), xpIn, xpFor, next: nxt };
+}
+
+function grantXp(amount) {
+  const mult = S.unlocks.xpSurgeOn ? 2 : 1;
+  const final = amount * mult;
+  const oldLv = currentLevel();
+  S.xp += final;
+  S.xpToday += final;
+  S.xpTodayDate = today();
+  const newLv = currentLevel();
+  if (newLv > oldLv) {
+    for (let lv = oldLv + 1; lv <= newLv; lv++) applyLevelUnlock(lv);
+    queueLevelUp(newLv);
+  }
+  return final;
+}
+
+function deductXp(amount) {
+  S.xp = Math.max(0, S.xp - amount);
+  S.xpToday = Math.max(0, S.xpToday - amount);
+}
+
+function applyLevelUnlock(lv) {
+  const u = LEVEL_UNLOCKS[lv];
+  if (!u) return;
+  switch (u.type) {
+    case 'freezeSlot':  S.unlocks.freezeSlots++; break;
+    case 'habitSlots':  S.unlocks.habitSlots = u.val; break;
+    case 'xpSurge':    S.unlocks.xpSurgeUnlocked = true; break;
+    case 'badge':      if (!S.unlocks.badges.includes(u.id)) { S.unlocks.badges.push(u.id); recordBadgeEvent(u.id); } break;
+    case 'theme':      if (!S.unlocks.themes.includes(u.id)) S.unlocks.themes.push(u.id); break;
+    case 'title':      if (!S.unlocks.titles.includes(u.id)) S.unlocks.titles.push(u.id); break;
+    case 'prestige':
+      S.unlocks.prestige = true;
+      if (!S.unlocks.badges.includes('prestige_mode')) { S.unlocks.badges.push('prestige_mode'); recordBadgeEvent('prestige_mode'); }
+      if (!S.unlocks.titles.includes('the_prestige'))  S.unlocks.titles.push('the_prestige');
+      document.body.setAttribute('data-prestige','true');
+      break;
+  }
+}
+
+// ═══════════════════════════════════════════
+// HABITS
+// ═══════════════════════════════════════════
+
+function openAdd() {
+  const slots = S.unlocks.habitSlots || DEFAULT_SLOTS;
+  if (S.habits.length >= slots) {
+    toast(`⚠️ Habit limit (${slots}) reached. Level up to unlock more slots!`, 'warn');
+    return;
+  }
+  document.getElementById('addModal').classList.add('open');
+  document.getElementById('hNameIn').value = '';
+  document.getElementById('xpHintText').textContent = 'Select difficulty and type a name';
+  document.querySelectorAll('#hDiffSeg .diff-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.diff === 'moderate'));
+  setTimeout(() => document.getElementById('hNameIn').focus(), 80);
+}
+
+function closeAdd() { document.getElementById('addModal').classList.remove('open'); }
+
+function handleBgClick(e) { if (e.target.id === 'addModal') closeAdd(); }
+
+function modalKey(e) {
+  if (e.key === 'Enter') commitAdd();
+  if (e.key === 'Escape') closeAdd();
+}
+
+function selectDiff(prefix, diff) {
+  document.querySelectorAll(`#${prefix}DiffSeg .diff-btn`).forEach(b =>
+    b.classList.toggle('active', b.dataset.diff === diff));
+  prefix === 'h' ? updateXpHint() : updateEditXpHint();
+}
+
+function getSelectedDiff(prefix) {
+  return document.querySelector(`#${prefix}DiffSeg .diff-btn.active`)?.dataset.diff || 'moderate';
+}
+
+function difficultyXp(difficulty, name) {
+  const bases = { light: 30, moderate: 50, hard: 80 };
+  const base = bases[difficulty] || 50;
+  // AI keyword nudge: recognized task intensity shifts XP up or down
+  const aiXp = estimateXp(name); // 25 / 35 / 50 / 80
+  const aiNudge = Math.round((aiXp - 52) / 6); // easy→-4, default→-3, medium→0, hard→+5
+  // Name-hash for per-habit micro-variation so identical habits feel unique
+  let h = 5381;
+  for (let i = 0; i < name.length; i++) h = ((h << 5) + h + name.charCodeAt(i)) >>> 0;
+  const hashNudge = (h % 11) - 3; // -3 to +7
+  return Math.max(5, base + aiNudge + hashNudge);
+}
+
+function updateXpHint() {
+  const name = document.getElementById('hNameIn').value.trim();
+  if (!name) { document.getElementById('xpHintText').textContent = 'Select difficulty and type a name'; return; }
+  const xp = difficultyXp(getSelectedDiff('h'), name);
+  const surge = S.unlocks.xpSurgeOn ? ` · ⚡ Surge active → +${xp*2} XP!` : '';
+  document.getElementById('xpHintText').textContent = `+${xp} XP per completion${surge}`;
+}
+
+function commitAdd() {
+  const name = document.getElementById('hNameIn').value.trim();
+  if (!name) { document.getElementById('hNameIn').focus(); return; }
+  const difficulty = getSelectedDiff('h');
+  const xp = difficultyXp(difficulty, name);
+
+  const habit = { id:'h'+Date.now()+Math.random().toString(36).slice(2,6), name, xp, difficulty };
+  S.habits.push(habit);
+
+  if (S.habits.length === 1 && !S.unlocks.badges.includes('first_habit')) {
+    S.unlocks.badges.push('first_habit');
+    recordBadgeEvent('first_habit');
+    setTimeout(() => toast('🌱 Badge earned: First Step!', 'success'), 300);
+  }
+  if (S.habits.length >= 5 && !S.unlocks.badges.includes('five_habits')) {
+    S.unlocks.badges.push('five_habits');
+    recordBadgeEvent('five_habits');
+    setTimeout(() => toast('🗂️ Badge: Fully Loaded!', 'success'), 300);
+  }
+
+  SFX.addHabit();
+  save(); closeAdd(); renderHabits(); updateProgress(); updateHeader();
+  toast(`✅ "${name}" added — ${xp} XP per completion`, 'success');
+}
+
+function deleteHabit(id) {
+  const h = S.habits.find(x => x.id === id);
+  if (!h) return;
+  S.habits = S.habits.filter(x => x.id !== id);
+  const log = todayLog();
+  if (log.done.includes(id)) {
+    log.done = log.done.filter(x => x !== id);
+    const xpBack = log.hxp[id] || h.xp;
+    deductXp(xpBack);
+    delete log.hxp[id];
+    log.xp = Math.max(0, (log.xp||0) - xpBack);
+
+    // If no completions remain today, today no longer counts as an active day.
+    // Roll back lastActiveDate and streak so the chain isn't falsely maintained.
+    if (log.done.length === 0 && S.lastActiveDate === today()) {
+      const t = today();
+      // Find the most recent prior day that had completions
+      let prev = null;
+      for (let i = 1; i <= 365; i++) {
+        const d = dateMinus(t, i);
+        if (S.dailyLog[d] && S.dailyLog[d].done && S.dailyLog[d].done.length) { prev = d; break; }
+      }
+      S.lastActiveDate = prev;
+      if (!prev) {
+        S.streak = 0;
+      } else {
+        const yest = dateMinus(t, 1);
+        // prev === yest means today's completion had incremented the streak — undo it
+        S.streak = prev < yest ? 0 : Math.max(0, S.streak - 1);
+      }
+    }
+  }
+  SFX.deleteHabit();
+  save(); renderHabits(); updateProgress(); updateHeader();
+  toast(`🗑️ "${h.name}" removed`, 'info');
+}
+
+let editingHabitId = null;
+
+function openEdit(id) {
+  const h = S.habits.find(x => x.id === id);
+  if (!h) return;
+  editingHabitId = id;
+  document.getElementById('eNameIn').value = h.name;
+  const habitDiff = h.difficulty || 'moderate';
+  document.querySelectorAll('#eDiffSeg .diff-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.diff === habitDiff));
+  updateEditXpHint();
+  document.getElementById('editModal').classList.add('open');
+  setTimeout(() => document.getElementById('eNameIn').focus(), 80);
+}
+
+function closeEdit() {
+  document.getElementById('editModal').classList.remove('open');
+  editingHabitId = null;
+}
+
+function handleEditBgClick(e) { if (e.target.id === 'editModal') closeEdit(); }
+
+function editModalKey(e) {
+  if (e.key === 'Enter') commitEdit();
+  if (e.key === 'Escape') closeEdit();
+}
+
+function updateEditXpHint() {
+  const name = document.getElementById('eNameIn').value.trim();
+  if (!name) { document.getElementById('eXpHintText').textContent = 'XP per completion'; return; }
+  const xp = difficultyXp(getSelectedDiff('e'), name);
+  const surge = S.unlocks.xpSurgeOn ? ` · ⚡ Surge active → +${xp*2} XP!` : '';
+  document.getElementById('eXpHintText').textContent = `+${xp} XP per completion${surge}`;
+}
+
+function commitEdit() {
+  const name = document.getElementById('eNameIn').value.trim();
+  if (!name) { document.getElementById('eNameIn').focus(); return; }
+  const difficulty = getSelectedDiff('e');
+  const xp = difficultyXp(difficulty, name);
+  const h = S.habits.find(x => x.id === editingHabitId);
+  if (!h) return;
+  h.name = name;
+  h.xp = xp;
+  h.difficulty = difficulty;
+  save(); closeEdit(); renderHabits(); updateProgress();
+  toast(`✏️ "${name}" updated`, 'success');
+}
+
+function toggleHabit(id) {
+  const log = todayLog();
+  const h = S.habits.find(x => x.id === id);
+  if (!h) return;
+
+  if (log.done.includes(id)) {
+    // Uncomplete
+    log.done = log.done.filter(x => x !== id);
+    const xpBack = log.hxp[id] || h.xp;
+    deductXp(xpBack);
+    delete log.hxp[id];
+    log.xp = Math.max(0, (log.xp||0) - xpBack);
+
+    if (_sbUser && log.hdbId?.[id]) {
+      const cid = log.hdbId[id];
+      _sb.from('habit_completions').delete().eq('id', cid).then(() => {}).catch(() => {});
+      broadcastFriendEvent('habit_removed', { completion_id: cid });
+      delete log.hdbId[id];
+    }
+
+    SFX.uncomplete();
+
+    // Un-super: deduct the bonus that was actually granted (surge may have doubled it)
+    if (log.super) {
+      log.super = false;
+      S.superDays = Math.max(0, S.superDays - 1);
+      deductXp(log.superXp || SUPER_BONUS);
+      delete log.superXp;
+    }
+
+    // Roll back streak when the last completion of the day is removed
+    if (log.done.length === 0 && S.lastActiveDate === today()) {
+      const t = today();
+      let prev = null;
+      for (let i = 1; i <= 365; i++) {
+        const d = dateMinus(t, i);
+        if (S.dailyLog[d] && S.dailyLog[d].done && S.dailyLog[d].done.length) { prev = d; break; }
+      }
+      S.lastActiveDate = prev;
+      if (!prev) {
+        S.streak = 0;
+      } else {
+        const yest = dateMinus(t, 1);
+        // prev === yest means today's first check had incremented the streak — undo that
+        S.streak = prev < yest ? 0 : Math.max(0, S.streak - 1);
+      }
+    }
+  } else {
+    // Complete
+    log.done.push(id);
+    const earned = grantXp(h.xp);
+    log.hxp[id] = earned;
+    log.xp = (log.xp||0) + earned;
+    S.totalDone++;
+
+    if (_sbUser) {
+      _sb.from('habit_completions').insert({
+        user_id: _sbUser.id, habit_name: h.name, xp_earned: earned, streak_at_time: S.streak,
+      }).select('id').single().then(({ data }) => {
+        if (data?.id) {
+          log.hdbId = log.hdbId || {};
+          log.hdbId[id] = data.id;
+          save();
+          broadcastFriendEvent('habit_completed', { completion_id: data.id });
+        }
+      }).catch(() => {});
+    }
+
+    SFX.complete();
+    floatXp(`+${earned} XP`);
+
+    // Streak: first completion of the day
+    if (log.done.length === 1) {
+      const t = today();
+      const yest = dateMinus(t, 1);
+      if (S.lastActiveDate === yest || S.lastActiveDate === t) {
+        if (S.lastActiveDate !== t) S.streak++;
+      } else {
+        S.streak = 1;
+      }
+      S.lastActiveDate = t;
+      checkStreakBadges();
+    }
+
+    // Super streak check
+    if (!log.super && S.habits.length > 0 && log.done.length === S.habits.length) {
+      log.super = true;
+      S.superDays++;
+      const bonus = grantXp(SUPER_BONUS);
+      log.superXp = bonus;
+      SFX.superStreak();
+      floatXp(`+${bonus} XP SUPER STREAK!`, 700);
+      broadcastFriendEvent('super_streak', { name: S.profileName || 'A friend', count: S.habits.length });
+      if (!S.unlocks.streakShield) {
+        S.unlocks.streakShield = true;
+        toast('🛡️ Super Streak! Streak Shield awarded!', 'success');
+      } else {
+        toast('⭐ Super Streak! All habits complete!', 'success');
+      }
+      if (!S.unlocks.badges.includes('super_first')) {
+        S.unlocks.badges.push('super_first');
+        recordBadgeEvent('super_first');
+        setTimeout(() => toast('⭐ Badge: Perfectionist!', 'success'), 500);
+      }
+      if (S.superDays >= 7 && !S.unlocks.badges.includes('super_7')) {
+        S.unlocks.badges.push('super_7');
+        recordBadgeEvent('super_7');
+        setTimeout(() => toast('👑 Badge: Total Dominance!', 'success'), 700);
+      }
+      if (S.superDays >= 30 && !S.unlocks.badges.includes('super_30')) {
+        S.unlocks.badges.push('super_30');
+        recordBadgeEvent('super_30');
+        setTimeout(() => toast('🌙 Badge: Lunar Legend!', 'success'), 900);
+      }
+    }
+
+    // Total completions badges
+    if (S.totalDone >= 100 && !S.unlocks.badges.includes('total_100')) {
+      S.unlocks.badges.push('total_100');
+      recordBadgeEvent('total_100');
+      setTimeout(() => toast('📊 Badge: Century Club!', 'success'), 500);
+    }
+    if (S.totalDone >= 500 && !S.unlocks.badges.includes('total_500')) {
+      S.unlocks.badges.push('total_500');
+      recordBadgeEvent('total_500');
+      setTimeout(() => toast('🚀 Badge: High Achiever!', 'success'), 500);
+    }
+
+    // XP milestone badges
+    if (S.xp >= 1000 && !S.unlocks.badges.includes('xp_1000')) {
+      S.unlocks.badges.push('xp_1000');
+      recordBadgeEvent('xp_1000');
+      setTimeout(() => toast('🌟 Badge: XP Rising!', 'success'), 500);
+    }
+    if (S.xp >= 5000 && !S.unlocks.badges.includes('xp_5000')) {
+      S.unlocks.badges.push('xp_5000');
+      recordBadgeEvent('xp_5000');
+      setTimeout(() => toast('💫 Badge: XP Veteran!', 'success'), 500);
+    }
+  }
+
+  save(); renderHabits(); updateProgress(); updateHeader();
+}
+
+function checkStreakBadges() {
+  const checks = [
+    [7,   'streak_7',   '🔥 Badge: Week Warrior!'],
+    [14,  'streak_14',  '🌊 Badge: Fortnight Flow!'],
+    [30,  'streak_30',  '📅 Badge: Monthly Devotion!'],
+    [50,  'streak_50',  '🏆 Badge: Fifty Strong!'],
+    [100, 'streak_100', '💎 Badge: Centurion!'],
+  ];
+  for (const [n, id, msg] of checks) {
+    if (S.streak >= n && !S.unlocks.badges.includes(id)) {
+      S.unlocks.badges.push(id);
+      recordBadgeEvent(id);
+      setTimeout(() => { SFX.badge(); toast(msg, 'success'); }, 600);
+      broadcastFriendEvent('streak_milestone', { name: S.profileName || 'A friend', streak: S.streak });
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// XP SURGE
+// ═══════════════════════════════════════════
+
+function activateSurge() {
+  if (!S.unlocks.xpSurgeUnlocked) {
+    toast('🔒 XP Surge unlocks at Level 5 (Devoted)', 'warn'); return;
+  }
+  if (S.unlocks.xpSurgeOn) { toast('⚡ XP Surge is already active!', 'info'); return; }
+
+  if (S.unlocks.xpSurgeLastUsed) {
+    const daysSince = (Date.now() - new Date(S.unlocks.xpSurgeLastUsed)) / 86400000;
+    if (daysSince < 7) {
+      toast(`⏳ XP Surge recharges in ${Math.ceil(7 - daysSince)} day(s)`, 'warn'); return;
+    }
+  }
+
+  S.unlocks.xpSurgeOn = true;
+  S.unlocks.xpSurgeLastUsed = new Date().toISOString();
+  S.unlocks.xpSurgeExpires  = new Date(Date.now() + 86400000).toISOString();
+  if (!S.unlocks.badges.includes('surge_rider')) {
+    S.unlocks.badges.push('surge_rider');
+    recordBadgeEvent('surge_rider');
+    setTimeout(() => toast('⚡ Badge: Surge Rider!', 'success'), 500);
+  }
+  SFX.xpSurge();
+  save(); renderPowerupBar(); renderHabits(); updateXpHint();
+  toast('⚡ XP Surge active! 2× XP for the next 24 hours!', 'success');
+}
+
+function checkSurgeExpiry() {
+  if (!S.unlocks.xpSurgeOn || !S.unlocks.xpSurgeExpires) return;
+  if (Date.now() > new Date(S.unlocks.xpSurgeExpires).getTime()) {
+    S.unlocks.xpSurgeOn = false;
+    save(); renderPowerupBar(); renderHabits();
+  }
+}
+
+// ═══════════════════════════════════════════
+// RENDER — TODAY
+// ═══════════════════════════════════════════
+
+
+function renderHabits() {
+  const el = document.getElementById('habitList');
+  const log = todayLog();
+  if (!S.habits.length) {
+    el.innerHTML = `<div class="empty"><div class="ei">🎯</div><h3>No habits yet</h3><p>Add your first habit to start earning XP</p></div>`;
+    return;
+  }
+  const surge = S.unlocks.xpSurgeOn;
+  el.innerHTML = S.habits.map(h => {
+    const done = log.done.includes(h.id);
+    const xpShow = surge
+      ? `<span class="xv">${h.xp*2} XP</span> <span style="text-decoration:line-through;opacity:.45">${h.xp}</span> <span style="color:var(--warning)">2× Surge</span>`
+      : `<span class="xv">${h.xp} XP</span>`;
+    return `
+      <div class="habit-card${done?' done':''}" id="hc-${h.id}" data-id="${h.id}">
+        <div class="habit-checkbox" onclick="toggleHabit('${h.id}')">${done ? '✓' : ''}</div>
+        <div class="hinfo">
+          <div class="hname">${esc(h.name)}</div>
+          <div class="hxp">${xpShow} per completion</div>
+        </div>
+        <div class="hactions">
+          <button class="hbtn" onclick="openEdit('${h.id}')" title="Edit">✏️</button>
+          <button class="hbtn del" onclick="deleteHabit('${h.id}')" title="Delete">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderStreakHero() {
+  const hero   = document.getElementById('streakHero');
+  const number = document.getElementById('shNumber');
+  const status = document.getElementById('shStatus');
+  const log = todayLog();
+  const isPerfect = log.super;
+  const isActive  = S.streak > 0;
+
+  hero.className = 'streak-hero ' + (isPerfect ? 'sh-perfect' : isActive ? 'sh-active' : 'sh-unlit');
+  number.textContent = S.streak;
+
+  if (isPerfect) {
+    status.textContent = '⭐ Perfect streak — all habits complete today!';
+  } else if (isActive) {
+    status.textContent = S.streak === 1
+      ? 'Streak started — keep it going tomorrow!'
+      : `${S.streak} days strong — don't break the chain!`;
+  } else {
+    status.textContent = 'Complete a habit today to start your streak';
+  }
+}
+
+function updateProgress() {
+  const log = todayLog();
+  const total = S.habits.length, done = log.done.length;
+  const pct = total > 0 ? done / total : 0;
+  const circ = CIRC;
+
+  document.getElementById('ringFill').style.strokeDashoffset = circ - pct * circ;
+  document.getElementById('ringText').textContent = `${done}/${total}`;
+  document.getElementById('pXp').textContent = S.xpToday.toLocaleString();
+
+  let title, sub;
+  if (!total) {
+    title = 'Add your first habit'; sub = 'Click "+ Add Habit" to get started';
+  } else if (!done) {
+    title = 'Start your day'; sub = `${total} habit${total>1?'s':''} waiting · ${S.habits.reduce((a,h)=>a+h.xp,0)}+ XP available`;
+  } else if (done === total) {
+    title = log.super ? '⭐ Perfect Day!' : '✅ All Done!';
+    sub = log.super ? 'Super Streak achieved · Streak Shield earned!' : `All ${total} habits complete`;
+  } else {
+    title = `${done} of ${total} complete`;
+    sub = `${total - done} habit${total-done>1?'s':''} remaining`;
+  }
+  document.getElementById('pTitle').textContent = title;
+  document.getElementById('pSub').textContent = sub;
+
+  // Update streak pill color
+  const sp = document.getElementById('streakPill');
+  sp.className = `pill${log.super ? ' gold-pill' : ''}`;
+
+  renderStreakHero();
+}
+
+function updateHeader() {
+  const lv = currentLevel();
+  const ld = levelData(lv);
+  const { pct } = xpProgress();
+  const nxt = levelData(lv + 1);
+
+  document.getElementById('hLevel').textContent = `Lv.${lv} ${ld.name}`;
+  document.getElementById('hXpCur').textContent = S.xp.toLocaleString() + ' XP';
+  document.getElementById('hXpNext').textContent = nxt ? nxt.xp.toLocaleString() + ' XP' : 'MAX';
+  document.getElementById('hXpFill').style.width = pct + '%';
+  document.getElementById('hStreak').textContent = S.streak;
+  document.getElementById('hXpTotal').textContent = S.xp.toLocaleString();
+
+  if (S.unlocks.prestige) document.body.setAttribute('data-prestige','true');
+}
+
+function renderPowerupBar() {
+  const el = document.getElementById('powerupBar');
+  const parts = [];
+
+  if (S.unlocks.xpSurgeOn) {
+    const hrs = Math.max(0, Math.ceil((new Date(S.unlocks.xpSurgeExpires) - Date.now()) / 3600000));
+    parts.push(`<span class="surge-badge">⚡ XP SURGE ACTIVE · ${hrs}h left</span>`);
+  } else if (S.unlocks.xpSurgeUnlocked) {
+    const lastUsed = S.unlocks.xpSurgeLastUsed;
+    const ready = !lastUsed || (Date.now() - new Date(lastUsed)) / 86400000 >= 7;
+    if (ready) parts.push(`<button class="btn btn-surge" onclick="activateSurge()">⚡ XP Surge Ready</button>`);
+  }
+
+  if (S.unlocks.streakShield) {
+    parts.push(`<span class="shield-badge">🛡️ Streak Shield Active</span>`);
+  }
+
+  el.innerHTML = parts.join('');
+  el.style.display = parts.length ? 'flex' : 'none';
+}
+
+// ═══════════════════════════════════════════
+// RENDER — CALENDAR
+// ═══════════════════════════════════════════
+
+let calM = new Date().getMonth();
+let calY = new Date().getFullYear();
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function renderCalendar() {
+  const t = today();
+  const dim = daysInMonth(calY, calM);
+  const fd  = firstDow(calY, calM);
+
+  document.getElementById('calMonthTitle').textContent = `${MONTHS[calM]} ${calY}`;
+
+  let active = 0, perfect = 0;
+  for (let d = 1; d <= dim; d++) {
+    const ds = `${calY}-${p2(calM+1)}-${p2(d)}`;
+    const log = S.dailyLog[ds];
+    if (log && log.done && log.done.length) { active++; if (log.super) perfect++; }
+  }
+  document.getElementById('calSub').textContent = `${active} active day${active!==1?'s':''} · ${perfect} perfect day${perfect!==1?'s':''}`;
+
+  let html = DAYS.map(d => `<div class="cal-dh">${d}</div>`).join('');
+  for (let i = 0; i < fd; i++) html += '<div class="cal-day empty"></div>';
+
+  for (let d = 1; d <= dim; d++) {
+    const ds = `${calY}-${p2(calM+1)}-${p2(d)}`;
+    const log = S.dailyLog[ds];
+    const isT = ds === t;
+    const isF = ds > t;
+    let cls = 'cal-day';
+
+    if (isF) cls += ' future';
+    else if (log && log.super) cls += ' super';
+    else if (log && log.done && log.done.length) {
+      const allDone = S.habits.length > 0 && log.done.length >= S.habits.length;
+      cls += allDone ? ' full' : ' partial';
+    } else cls += ' none';
+
+    if (isT) cls += ' today';
+    const dot = (log && log.done && log.done.length) ? '<div class="dd"></div>' : '';
+    html += `<div class="${cls}"><div class="dn">${d}</div>${dot}</div>`;
+  }
+
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function changeMonth(dir) {
+  calM += dir;
+  if (calM < 0)  { calM = 11; calY--; }
+  if (calM > 11) { calM = 0;  calY++; }
+  renderCalendar();
+}
+
+// ═══════════════════════════════════════════
+// RENDER — ACHIEVEMENTS
+// ═══════════════════════════════════════════
+
+function renderAchievements() {
+  const earned   = S.unlocks.badges;
+  const featured = S.featuredBadges || [];
+  document.getElementById('achSub').textContent = `${earned.length} of ${BADGES.length} earned · ${featured.length}/3 featured`;
+  document.getElementById('badgeGrid').innerHTML = BADGES.map(b => {
+    const e = earned.includes(b.id);
+    const f = featured.includes(b.id);
+    const cls = e ? (f ? 'earned featured' : 'earned') : 'locked';
+    return `<div class="badge-card ${cls}" ${e ? `onclick="toggleFeaturedBadge('${b.id}')" title="${f ? 'Remove from profile' : 'Feature on profile'}"` : ''}>
+        <div class="badge-icon">${b.icon}</div>
+        <div style="min-width:0;">
+          <div class="badge-name">${b.name}</div>
+          <div class="badge-desc">${b.desc}</div>
+          ${f ? '<div class="badge-featured-tag">★ FEATURED</div>' : ''}
+          ${e && !f ? '<div class="badge-status">EARNED ✓</div>' : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleFeaturedBadge(id) {
+  if (!S.featuredBadges) S.featuredBadges = [];
+  const idx = S.featuredBadges.indexOf(id);
+  if (idx !== -1) {
+    S.featuredBadges.splice(idx, 1);
+  } else {
+    if (S.featuredBadges.length >= 3) {
+      toast('Max 3 featured badges — remove one first', 'warn'); return;
+    }
+    S.featuredBadges.push(id);
+  }
+  save();
+  syncToSupabase();
+  renderAchievements();
+  renderProfileCard();
+}
+
+// ═══════════════════════════════════════════
+// RENDER — PROFILE
+// ═══════════════════════════════════════════
+
+function renderProfile() {
+  renderProfileCard();
+  renderAchievements();
+
+  // Stats
+  const lv = currentLevel();
+  const { xpIn, xpFor } = xpProgress();
+  document.getElementById('statsGrid').innerHTML = [
+    { v: S.xp.toLocaleString(), l: 'Total XP' },
+    { v: `Lv.${lv}`, l: 'Level' },
+    { v: S.streak,   l: 'Day Streak' },
+    { v: S.superDays, l: 'Perfect Days' },
+    { v: S.totalDone, l: 'Habits Done' },
+    { v: S.habits.length, l: 'Active Habits' },
+    { v: S.unlocks.streakShield ? '1' : '0', l: 'Streak Shields' },
+    { v: S.unlocks.badges.length, l: 'Badges Earned' },
+  ].map(s => `<div class="stat-box"><div class="sv">${s.v}</div><div class="sl">${s.l}</div></div>`).join('');
+
+  // Powerups
+  const items = [];
+
+  // XP Surge
+  const surgeUnlocked = S.unlocks.xpSurgeUnlocked;
+  const surgeOn = S.unlocks.xpSurgeOn;
+  const surgeReady = surgeUnlocked && !surgeOn && (!S.unlocks.xpSurgeLastUsed || (Date.now() - new Date(S.unlocks.xpSurgeLastUsed)) / 86400000 >= 7);
+  items.push({
+    icon: '⚡',
+    name: `XP Surge${!surgeUnlocked?' (Locked)':''}`,
+    desc: !surgeUnlocked
+      ? 'Doubles all XP for 24h · Unlocks at Level 5 (Devoted)'
+      : surgeOn ? 'Currently active — enjoy the 2× XP!'
+      : surgeReady ? 'Ready to activate · Once per week · 24h duration'
+      : `Recharges in ${Math.ceil(7 - (Date.now() - new Date(S.unlocks.xpSurgeLastUsed)) / 86400000)} day(s)`,
+    btn: surgeUnlocked && !surgeOn && surgeReady
+      ? `<button class="btn btn-surge" onclick="activateSurge()" style="font-size:12px;padding:6px 14px;">Activate</button>`
+      : surgeOn ? `<span style="color:var(--warning);font-size:12px;font-weight:700;">Active now</span>` : '',
+  });
+
+  // Streak Shield
+  items.push({
+    icon: '🛡️',
+    name: `Streak Shield${S.unlocks.streakShield ? ' (Ready)' : ' (None held)'}`,
+    desc: S.unlocks.streakShield
+      ? 'Will automatically absorb your next missed day'
+      : 'Earned by completing ALL habits in a single day',
+    btn: '',
+  });
+
+  // Streak Freeze (Passive)
+  if (S.unlocks.freezeSlots > 0) {
+    items.push({
+      icon: '❄️',
+      name: 'Streak Freeze',
+      desc: `${S.unlocks.freezeSlots} freeze${S.unlocks.freezeSlots>1?'s':''} available · Passive protection (unlocked at Level 3)`,
+      btn: '',
+    });
+  }
+
+  // Titles
+  if (S.unlocks.titles.length > 0) {
+    const btns = S.unlocks.titles.map(tid => {
+      const tObj = TITLES.find(t => t.id === tid);
+      const active = S.unlocks.title === tid;
+      return `<button class="btn ${active?'btn-primary':'btn-ghost'}" style="font-size:11px;padding:4px 10px;" onclick="setTitle('${tid}')">${tObj?tObj.name:tid}</button>`;
+    }).join('');
+    items.push({
+      icon: '🏷️', name: 'Titles',
+      desc: 'Select a title to display on your profile',
+      btn: `<div style="display:flex;flex-wrap:wrap;gap:6px;">${btns}</div>`,
+    });
+  }
+
+  document.getElementById('puGrid').innerHTML = items.map(i => `
+    <div class="pu-card">
+      <div class="pu-icon">${i.icon}</div>
+      <div class="pu-body">
+        <div class="pu-name">${i.name}</div>
+        <div class="pu-desc">${i.desc}</div>
+        ${i.btn ? `<div class="pu-action">${i.btn}</div>` : ''}
+      </div>
+    </div>`).join('');
+
+  // Themes
+  const lv2 = currentLevel();
+  document.getElementById('themeRow').innerHTML = THEMES.map(t => {
+    const unlocked = S.unlocks.themes.includes(t.id);
+    const active = S.unlocks.theme === t.id;
+    return `
+      <div class="theme-swatch${active?' active':''}${!unlocked?' locked':''}"
+           style="background:${t.color}18;border-color:${active?t.color:'transparent'};"
+           title="${t.name}${!unlocked?' · Lv.'+t.unlockLvl:''}"
+           onclick="${unlocked?`setTheme('${t.id}')`:`toast('🔒 ${t.name} unlocks at Level ${t.unlockLvl}','warn')`}">
+        ${t.emoji}
+      </div>`;
+  }).join('');
+
+  // Roadmap
+  const curLv = currentLevel();
+  document.getElementById('roadmapEl').innerHTML = LEVELS.map(l => {
+    const done = curLv > l.n;
+    const cur  = curLv === l.n;
+    const bCls = done ? 'done' : cur ? 'current' : '';
+    const tCls = cur  ? 'current-lvl' : '';
+    const tag  = cur  ? `<span class="curr-tag">Current</span>` : '';
+    return `
+      <div class="roadmap-row" style="${!done&&!cur?'opacity:.38':''}">
+        <div class="roadmap-bubble ${bCls}">${l.icon}</div>
+        <div class="roadmap-text">
+          <div class="roadmap-lvl ${tCls}">Level ${l.n} — ${l.name}${tag}</div>
+          ${l.unlock?`<div class="roadmap-unlock">${l.unlock.replace(/<[^>]+>/g,'')}</div>`:''}
+        </div>
+        <div class="roadmap-xp">${l.xp.toLocaleString()} XP</div>
+      </div>`;
+  }).join('');
+}
+
+function renderProfileCard() {
+  const av    = document.getElementById('pidAvatar');
+  const nameEl = document.getElementById('pidName');
+  const titleEl = document.getElementById('pidTitle');
+  const bioEl  = document.getElementById('pidBio');
+
+  if (S.profilePic) {
+    av.style.backgroundImage = `url(${S.profilePic})`;
+    av.textContent = '';
+  } else {
+    av.style.backgroundImage = '';
+    av.textContent = S.profileName
+      ? S.profileName.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+      : '👤';
+  }
+
+  nameEl.textContent = S.profileName || 'Add your name';
+  nameEl.className = 'pid-name' + (S.profileName ? '' : ' empty');
+
+  const titleObj = S.unlocks.title ? TITLES.find(t => t.id === S.unlocks.title) : null;
+  titleEl.textContent = titleObj ? `"${titleObj.name}"` : '';
+
+  bioEl.textContent = S.profileBio || 'No bio yet — tell us about yourself!';
+  bioEl.className = 'pid-bio' + (S.profileBio ? '' : ' empty');
+
+  const fb = document.getElementById('pidFeaturedBadges');
+  if (fb) {
+    const featured = (S.featuredBadges || []).map(id => BADGES.find(b => b.id === id)).filter(Boolean);
+    fb.innerHTML = featured.map(b => `<span class="pid-feat-badge">${b.icon} ${b.name}</span>`).join('');
+  }
+
+  renderProfileBtn();
+}
+
+let picStagedUrl = null;
+
+// ── CROP STATE ──
+let cropRawImg   = null;
+let cropScale    = 1;
+let cropBaseScale = 1;
+let cropOffX     = 0, cropOffY = 0;
+let cropDragging = false;
+let cropPrevX    = 0, cropPrevY = 0;
+
+function openProfileEdit() {
+  picStagedUrl = null;
+  const wrap = document.getElementById('picUploadWrap');
+  if (S.profilePic) {
+    wrap.style.backgroundImage = `url(${S.profilePic})`;
+    wrap.innerHTML = '<div class="pic-upload-overlay">📷</div>';
+  } else {
+    wrap.style.backgroundImage = '';
+    const initials = S.profileName
+      ? S.profileName.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+      : '👤';
+    wrap.innerHTML = `<span style="position:relative;z-index:1">${initials}</span><div class="pic-upload-overlay">📷</div>`;
+  }
+  document.getElementById('pNameIn').value = S.profileName || '';
+  document.getElementById('pBioIn').value  = S.profileBio  || '';
+  document.getElementById('profileFormArea').style.display = 'block';
+  document.getElementById('cropArea').style.display = 'none';
+  document.getElementById('profileModalTitle').textContent = 'Edit Profile';
+  document.getElementById('profileModal').classList.add('open');
+  setTimeout(() => document.getElementById('pNameIn').focus(), 80);
+}
+
+function closeProfileEdit() {
+  document.getElementById('profileModal').classList.remove('open');
+  picStagedUrl = null;
+  cropRawImg = null;
+}
+
+function handleProfileBgClick(e) { if (e.target.id === 'profileModal') closeProfileEdit(); }
+
+function handlePicUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => showCropUI(ev.target.result);
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function showCropUI(src) {
+  cropRawImg = new Image();
+  cropRawImg.onload = () => {
+    cropBaseScale = Math.max(200 / cropRawImg.naturalWidth, 200 / cropRawImg.naturalHeight);
+    cropScale = 1;
+    cropOffX  = 0;
+    cropOffY  = 0;
+    document.getElementById('cropZoom').value = 1;
+    updateCropImage();
+    document.getElementById('profileFormArea').style.display = 'none';
+    document.getElementById('cropArea').style.display = 'block';
+    document.getElementById('profileModalTitle').textContent = 'Crop Photo';
+  };
+  cropRawImg.src = src;
+}
+
+function updateCropImage() {
+  const img = document.getElementById('cropImg');
+  const total = cropBaseScale * cropScale;
+  const w = cropRawImg.naturalWidth  * total;
+  const h = cropRawImg.naturalHeight * total;
+  const maxX = Math.max(0, (w - 200) / 2);
+  const maxY = Math.max(0, (h - 200) / 2);
+  cropOffX = Math.max(-maxX, Math.min(maxX, cropOffX));
+  cropOffY = Math.max(-maxY, Math.min(maxY, cropOffY));
+  img.src          = cropRawImg.src;
+  img.style.width  = w + 'px';
+  img.style.height = h + 'px';
+  img.style.left   = (100 - w / 2 + cropOffX) + 'px';
+  img.style.top    = (100 - h / 2 + cropOffY) + 'px';
+}
+
+function onCropZoom(val) {
+  cropScale = parseFloat(val);
+  updateCropImage();
+}
+
+function cancelCrop() {
+  document.getElementById('cropArea').style.display = 'none';
+  document.getElementById('profileFormArea').style.display = 'block';
+  document.getElementById('profileModalTitle').textContent = 'Edit Profile';
+  cropRawImg = null;
+}
+
+function applyCrop() {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 200;
+  const ctx   = canvas.getContext('2d');
+  const total = cropBaseScale * cropScale;
+  const half  = 100 / total;
+  const cx    = cropRawImg.naturalWidth  / 2 - cropOffX / total;
+  const cy    = cropRawImg.naturalHeight / 2 - cropOffY / total;
+  ctx.drawImage(cropRawImg, cx - half, cy - half, half * 2, half * 2, 0, 0, 200, 200);
+  picStagedUrl = canvas.toDataURL('image/jpeg', 0.85);
+  const wrap = document.getElementById('picUploadWrap');
+  wrap.style.backgroundImage = `url(${picStagedUrl})`;
+  wrap.innerHTML = '<div class="pic-upload-overlay">📷</div>';
+  cancelCrop();
+}
+
+function initCropDrag() {
+  const container = document.getElementById('cropContainer');
+
+  container.addEventListener('mousedown', e => {
+    cropDragging = true; cropPrevX = e.clientX; cropPrevY = e.clientY;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!cropDragging) return;
+    cropOffX += e.clientX - cropPrevX; cropOffY += e.clientY - cropPrevY;
+    cropPrevX = e.clientX; cropPrevY = e.clientY;
+    updateCropImage();
+  });
+  document.addEventListener('mouseup', () => { cropDragging = false; });
+
+  container.addEventListener('touchstart', e => {
+    cropDragging = true;
+    cropPrevX = e.touches[0].clientX; cropPrevY = e.touches[0].clientY;
+    e.preventDefault();
+  }, { passive: false });
+  container.addEventListener('touchmove', e => {
+    if (!cropDragging) return;
+    cropOffX += e.touches[0].clientX - cropPrevX;
+    cropOffY += e.touches[0].clientY - cropPrevY;
+    cropPrevX = e.touches[0].clientX; cropPrevY = e.touches[0].clientY;
+    updateCropImage(); e.preventDefault();
+  }, { passive: false });
+  container.addEventListener('touchend', () => { cropDragging = false; });
+
+  container.addEventListener('wheel', e => {
+    e.preventDefault();
+    const z = document.getElementById('cropZoom');
+    cropScale = Math.max(1, Math.min(4, cropScale - e.deltaY * 0.003));
+    z.value = cropScale;
+    updateCropImage();
+  }, { passive: false });
+}
+
+function commitProfileEdit() {
+  S.profileName = document.getElementById('pNameIn').value.trim();
+  S.profileBio  = document.getElementById('pBioIn').value.trim();
+  if (picStagedUrl !== null) S.profilePic = picStagedUrl;
+  save(); closeProfileEdit(); renderProfileCard();
+  syncToSupabase();
+  toast('✅ Profile updated', 'success');
+}
+
+function setTitle(id) {
+  S.unlocks.title = S.unlocks.title === id ? null : id;
+  save(); renderProfile(); renderProfileCard();
+}
+
+function setTheme(id) {
+  if (!S.unlocks.themes.includes(id)) return;
+  S.unlocks.theme = id;
+  applyTheme(id);
+  save(); renderProfile();
+}
+
+function applyTheme(id) {
+  document.documentElement.setAttribute('data-theme', id === 'default' ? '' : id);
+}
+
+// ═══════════════════════════════════════════
+// LEVEL UP QUEUE
+// ═══════════════════════════════════════════
+
+let luQueue = [], luShowing = false;
+
+function queueLevelUp(lv) {
+  luQueue.push(levelData(lv));
+  if (!luShowing) processLuQueue();
+}
+
+function processLuQueue() {
+  if (!luQueue.length) { luShowing = false; return; }
+  luShowing = true;
+  SFX.levelUp();
+  const d = luQueue.shift();
+  document.getElementById('luIcon').textContent = d.icon;
+  document.getElementById('luName').textContent = d.name;
+  document.getElementById('luUnlock').innerHTML = d.unlock ? d.unlock : '';
+  document.getElementById('lvlupBg').classList.add('show');
+  updateHeader();
+}
+
+function closeLvlUp() {
+  document.getElementById('lvlupBg').classList.remove('show');
+  setTimeout(() => { luShowing = false; processLuQueue(); }, 300);
+  if (profileDrawerOpen) renderProfile();
+}
+
+// ═══════════════════════════════════════════
+// TOASTS & FX
+// ═══════════════════════════════════════════
+
+function toast(msg, type = 'info') {
+  const w = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  w.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 260); }, 3200);
+}
+
+function floatXp(txt, delay = 0) {
+  setTimeout(() => {
+    const el = document.createElement('div');
+    el.className = 'xp-float';
+    el.textContent = txt;
+    el.style.left = (window.innerWidth/2 - 50) + 'px';
+    el.style.top = '72px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1400);
+  }, delay);
+}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════
+// SOUND ENGINE
+// ═══════════════════════════════════════════
+
+let _actx = null;
+
+function beep(freq, type, dur, vol, delay = 0) {
+  if (!_actx) _actx = new (window.AudioContext || window.webkitAudioContext)();
+  const ctx = _actx;
+  const play = () => {
+    const t = ctx.currentTime + delay + 0.01;
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+  };
+  ctx.state === 'running' ? play() : ctx.resume().then(play);
+}
+
+const SFX = {
+  complete()     { beep(660,'sine',0.12,0.28); beep(880,'sine',0.14,0.22,0.11); },
+  uncomplete()   { beep(380,'sine',0.18,0.14); beep(260,'sine',0.20,0.10,0.12); },
+  addHabit()     { beep(440,'sine',0.08,0.14); beep(554,'sine',0.10,0.10,0.07); },
+  deleteHabit()  { beep(200,'sine',0.18,0.12); },
+  streakBroken() { beep(440,'sine',0.28,0.16); beep(349,'sine',0.30,0.13,0.22); beep(262,'sine',0.38,0.10,0.48); },
+  badge()        { [784,880,988,1047].forEach((f,i) => beep(f,'sine',0.14,0.18,i*0.08)); },
+  superStreak() {
+    [523,659,784,1047].forEach((f,i) => beep(f,'sine',0.22,0.28,i*0.11));
+    beep(523,'sine',0.5,0.12,0.52); beep(784,'sine',0.5,0.12,0.52);
+  },
+  levelUp() {
+    [262,330,392,523,659,784,1047].forEach((f,i) => beep(f,'sine',0.18,0.22,i*0.075));
+    [523,659,784].forEach(f => beep(f,'triangle',0.9,0.18,0.58));
+  },
+  xpSurge() {
+    if (!_actx) _actx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _actx;
+    const play = () => {
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sawtooth';
+      const t = ctx.currentTime + 0.01;
+      osc.frequency.setValueAtTime(180, t);
+      osc.frequency.exponentialRampToValueAtTime(1400, t + 0.55);
+      gain.gain.setValueAtTime(0.13, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+      osc.start(t); osc.stop(t + 0.7);
+    };
+    ctx.state === 'running' ? play() : ctx.resume().then(play);
+  },
+};
+
+
+// ═══════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════
+
+function switchTab(name) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(t => t.classList.remove('active'));
+  const navEl = document.querySelector(`[data-tab="${name}"]`);
+  if (navEl) navEl.classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (name === 'calendar')     renderCalendar();
+  if (name === 'friends') {
+    // Land on Friends segment if there are pending requests, Feed otherwise
+    sbGetPendingRequests().then(reqs => {
+      if (reqs.length) switchFriendSeg('friends');
+      else             switchFriendSeg('feed');
+    }).catch(() => switchFriendSeg('feed'));
+  }
+}
+
+async function updateFriendsReqBadge() {
+  if (!_sbUser) return;
+  try {
+    const { count } = await _sb.from('friendships')
+      .select('id', { count: 'exact', head: true })
+      .eq('receiver_id', _sbUser.id)
+      .eq('status', 'pending');
+    const badge = document.getElementById('friendsReqBadge');
+    if (!badge) return;
+    if (count > 0) { badge.textContent = count; badge.style.display = 'inline-flex'; }
+    else           { badge.style.display = 'none'; }
+  } catch (_) {}
+}
+
+function refreshFriendsSeg() {
+  const seg = document.querySelector('.fseg-btn.active')?.dataset.seg;
+  if (seg === 'feed')    renderFriendsFeed();
+  if (seg === 'friends') { renderFriendsList(); updateFriendsReqBadge(); }
+  if (seg === 'find')    renderFindResults();
+}
+
+// ═══════════════════════════════════════════
+// PROFILE DRAWER
+// ═══════════════════════════════════════════
+
+let profileDrawerOpen = false;
+
+function openProfileDrawer() {
+  profileDrawerOpen = true;
+  document.getElementById('profileDrawer').classList.add('open');
+  document.getElementById('profileOverlay').classList.add('open');
+  document.getElementById('profileNavBtn').classList.add('open');
+  renderProfile();
+}
+
+function closeProfileDrawer() {
+  profileDrawerOpen = false;
+  document.getElementById('profileDrawer').classList.remove('open');
+  document.getElementById('profileOverlay').classList.remove('open');
+  document.getElementById('profileNavBtn').classList.remove('open');
+}
+
+function renderProfileBtn() {
+  const btn = document.getElementById('profileNavBtn');
+  if (!btn) return;
+  if (S.profilePic) {
+    btn.innerHTML = `<img src="${S.profilePic}" alt="">`;
+  } else if (S.profileName) {
+    btn.innerHTML = `<span style="font-size:14px;font-weight:700">${S.profileName.trim().charAt(0).toUpperCase()}</span>`;
+  } else {
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v1h20v-1c0-3.33-6.67-5-10-5z"/></svg>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// SUPABASE AUTH + SYNC
+// ═══════════════════════════════════════════
+
+async function syncToSupabase() {
+  if (!_sbUser) return;
+  try {
+    const lv = currentLevel();
+    const [, { error: profErr, data: profData }] = await Promise.all([
+      _sb.from('user_data').upsert(
+        { user_id: _sbUser.id, data: S, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      ),
+      _sb.from('profiles').update({
+        display_name:    S.profileName    || null,
+        bio:             S.profileBio     || null,
+        avatar_url:      S.profilePic     || null,
+        level:           lv,
+        streak:          S.streak,
+        featured_badges: S.featuredBadges || [],
+      }).eq('id', _sbUser.id).select()
+    ]);
+    if (profErr) console.error('[Ignite] profiles update error:', profErr);
+    else console.log('[Ignite] profiles updated:', profData);
+  } catch (err) { console.error('[Ignite] syncToSupabase exception:', err); }
+}
+
+async function loadFromSupabase() {
+  if (!_sbUser) return;
+  console.log('[Ignite] Auth UID:', _sbUser.id);
+
+  // ── Step 1: ensure profile row exists ────────────────────────────────────
+  let dbSocialCode = null, dbDisplayName = null, dbAvatarUrl = null;
+  try {
+    console.log('[Ignite] Checking for profile...');
+    const { data: prof, error: profErr } = await _sb.from('profiles')
+      .select('social_code, display_name, avatar_url')
+      .eq('id', _sbUser.id)
+      .maybeSingle();
+
+    if (profErr) {
+      console.error('[Ignite] Profile check error:', profErr);
+    } else if (prof) {
+      console.log('[Ignite] Profile found:', prof.social_code);
+      dbSocialCode  = prof.social_code  || null;
+      dbDisplayName = prof.display_name || null;
+      dbAvatarUrl   = prof.avatar_url   || null;
+      if (!dbSocialCode) {
+        // Row exists but social_code is null — fill it in
+        const generated = 'IGN-' + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
+        const { data: patched } = await _sb.from('profiles')
+          .update({ social_code: generated })
+          .eq('id', _sbUser.id)
+          .select('social_code')
+          .maybeSingle();
+        dbSocialCode = patched?.social_code || generated;
+      }
+    } else {
+      console.log('[Ignite] No profile found, creating...');
+      const generated = 'IGN-' + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
+      const { data: inserted, error: insertErr } = await _sb.from('profiles')
+        .insert({ id: _sbUser.id, social_code: generated })
+        .select('social_code, display_name, avatar_url')
+        .maybeSingle();
+      if (insertErr) {
+        console.error('[Ignite] Profile create error:', insertErr);
+        dbSocialCode = generated;
+      } else {
+        console.log('[Ignite] Profile created successfully:', inserted?.social_code);
+        dbSocialCode  = inserted?.social_code  || generated;
+        dbDisplayName = inserted?.display_name || null;
+        dbAvatarUrl   = inserted?.avatar_url   || null;
+      }
+    }
+  } catch (err) {
+    console.error('[Ignite] Profile step exception:', err);
+  }
+
+  // ── Step 2: load user_data ────────────────────────────────────────────────
+  try {
+    const { data: ud } = await _sb.from('user_data')
+      .select('data')
+      .eq('user_id', _sbUser.id)
+      .maybeSingle();
+    if (ud) {
+      const d = ud.data;
+      S = { ...defaultState(), ...d };
+      S.unlocks = { ...defaultState().unlocks, ...(d.unlocks || {}) };
+      if (!Array.isArray(S.habits))          S.habits = [];
+      if (!S.dailyLog)                       S.dailyLog = {};
+      if (!Array.isArray(S.unlocks.badges))  S.unlocks.badges = [];
+      if (!Array.isArray(S.unlocks.themes))  S.unlocks.themes = ['default'];
+      if (!Array.isArray(S.unlocks.titles))  S.unlocks.titles = [];
+      if (!Array.isArray(S.friends))          S.friends = [];
+      if (!Array.isArray(S.friendRequests))   S.friendRequests = [];
+      if (!Array.isArray(S.featuredBadges))   S.featuredBadges = [];
+      localStorage.setItem('hc_v1', JSON.stringify(S));
+    }
+  } catch (err) {
+    console.error('[Ignite] User data load failed:', err);
+  }
+
+  // DB social_code is always authoritative
+  if (dbSocialCode) S.socialCode = dbSocialCode;
+  else if (!S.socialCode) S.socialCode = 'IGN-' + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
+
+  // Populate profile fields from profiles table if user_data didn't have them
+  if (!S.profileName && dbDisplayName) S.profileName = dbDisplayName;
+  if (!S.profilePic  && dbAvatarUrl)   S.profilePic  = dbAvatarUrl;
+}
+
+function setAuthBusy(busy) {
+  document.getElementById('loginBtn').disabled  = busy;
+  document.getElementById('signupBtn').disabled = busy;
+  document.getElementById('loginBtn').textContent = busy ? 'Please wait…' : 'Log In';
+}
+
+function showAuthMsg(msg, type) {
+  const el = document.getElementById('authMsg');
+  el.textContent = msg;
+  el.className = 'auth-msg ' + type;
+}
+
+function authKey(e) { if (e.key === 'Enter') handleLogin(); }
+
+async function handleLogin() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPass').value;
+  if (!email || !pass) return showAuthMsg('Please enter your email and password.', 'error');
+  setAuthBusy(true);
+  const { data, error } = await _sb.auth.signInWithPassword({ email, password: pass });
+  setAuthBusy(false);
+  if (error) return showAuthMsg(error.message, 'error');
+  _sbUser = data.user;
+  console.log('[Ignite] Logged in, auth.uid():', _sbUser.id);
+  document.getElementById('authScreen').classList.add('sb-hidden');
+  await startApp();
+}
+
+async function handleSignup() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPass').value;
+  if (!email || !pass) return showAuthMsg('Please enter your email and password.', 'error');
+  if (pass.length < 6)  return showAuthMsg('Password must be at least 6 characters.', 'error');
+  setAuthBusy(true);
+  const { data, error } = await _sb.auth.signUp({ email, password: pass });
+  setAuthBusy(false);
+  if (error) return showAuthMsg(error.message, 'error');
+  if (data.session) {
+    // Email confirmation disabled — logged in immediately
+    _sbUser = data.user;
+    document.getElementById('authScreen').classList.add('sb-hidden');
+    await startApp();
+  } else {
+    showAuthMsg('Account created! Check your email to confirm, then log in.', 'info');
+  }
+}
+
+async function handleLogout() {
+  await _sb.auth.signOut();
+  _sbUser = null;
+  localStorage.removeItem('hc_v1');
+  window.location.reload();
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+
+// ═══════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════
+
+let _reminderTimer = null;
+
+function scheduleReminder() {
+  if (_reminderTimer) { clearTimeout(_reminderTimer); _reminderTimer = null; }
+  if (!S.reminderEnabled) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const [h, m] = (S.reminderTime || '09:00').split(':').map(Number);
+  const now  = new Date();
+  const next = new Date();
+  next.setHours(h, m, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+
+  _reminderTimer = setTimeout(async () => {
+    const t = today();
+    if (S.reminderLastNotified !== t) {
+      const log  = S.dailyLog[t] || {};
+      const done = Array.isArray(log.done) ? log.done : [];
+      const allDone = S.habits.length > 0 && S.habits.every(h => done.includes(h.id));
+      if (!allDone) {
+        try {
+          const reg = await navigator.serviceWorker.ready;
+          await reg.showNotification('🔥 Ignite', {
+            body: "Don't break your streak! Your habits are waiting.",
+            icon: 'icon-512.png',
+            badge: 'icon-192.png',
+            tag: 'daily-reminder',
+            renotify: false,
+            data: { url: './' }
+          });
+        } catch (_) {}
+      }
+      S.reminderLastNotified = t;
+      save();
+    }
+    scheduleReminder();
+  }, next - now);
+}
+
+function syncReminderUI() {
+  const timeEl  = document.getElementById('reminderTime');
+  const checkEl = document.getElementById('reminderEnabled');
+  const msgEl   = document.getElementById('notifPermMsg');
+  if (timeEl)  timeEl.value    = S.reminderTime || '09:00';
+  if (checkEl) checkEl.checked = !!S.reminderEnabled;
+  if (msgEl)   msgEl.classList.toggle('sb-hidden',
+    !('Notification' in window) || Notification.permission !== 'denied');
+}
+
+function saveReminder() {
+  S.reminderTime    = document.getElementById('reminderTime').value || '09:00';
+  S.reminderEnabled = document.getElementById('reminderEnabled').checked;
+  if (S.reminderEnabled && 'Notification' in window && Notification.permission === 'default') {
+    requestNotifPermission();
+  } else {
+    syncReminderUI();
+    scheduleReminder();
+    save();
+  }
+}
+
+async function requestNotifPermission() {
+  dismissNotifBanner();
+  const perm = await Notification.requestPermission();
+  syncReminderUI();
+  if (perm === 'granted') {
+    scheduleReminder();
+    save();
+  }
+}
+
+function dismissNotifBanner() {
+  const el = document.getElementById('notifBanner');
+  if (el) el.classList.add('sb-hidden');
+}
+
+function maybeShowNotifBanner() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    setTimeout(() => {
+      const el = document.getElementById('notifBanner');
+      if (el) el.classList.remove('sb-hidden');
+    }, 2500);
+  }
+}
+
+// ═══════════════════════════════════════════
+// FRIENDS
+// ═══════════════════════════════════════════
+
+
+// ─── Friend push notifications ─────────────
+
+let _myChannel = null;
+let _friendChannelMap = {};
+let _completionOwnerMap = {};
+let _profileCache = {};
+let _notifs = [];
+let _notifUnread = 0;
+
+function initMyChannel() {
+  if (!_sbUser) return;
+  if (_myChannel) _sb.removeChannel(_myChannel);
+  _myChannel = _sb.channel(`ignite:user:${_sbUser.id}`)
+    .on('broadcast', { event: 'got_like' }, ({ payload }) => {
+      addNotification('like', payload);
+    });
+  _myChannel.subscribe();
+}
+
+async function initFriendChannels() {
+  if (!_sbUser) return;
+  Object.values(_friendChannelMap).forEach(ch => _sb.removeChannel(ch));
+  _friendChannelMap = {};
+  try {
+    const friends = await sbGetFriends();
+    for (const f of friends) {
+      const ch = _sb.channel(`ignite:user:${f.id}`)
+        .on('broadcast', { event: 'super_streak' }, ({ payload }) => {
+          addNotification('super_streak', payload);
+          showFriendNotif('⭐ Perfect Day!', `${payload?.name || 'A friend'} completed all their habits!`);
+        })
+        .on('broadcast', { event: 'streak_milestone' }, ({ payload }) => {
+          addNotification('streak_milestone', payload);
+          showFriendNotif('🔥 Streak Milestone!', `${payload?.name || 'A friend'} is on a ${payload?.streak || ''}-day streak!`);
+        })
+        .on('broadcast', { event: 'habit_completed' }, () => {
+          if (document.querySelector('#fseg-feed.active')) renderFriendsFeed();
+        })
+        .on('broadcast', { event: 'habit_removed' }, ({ payload }) => {
+          const card = document.getElementById('feed-card-' + payload?.completion_id);
+          if (card) card.remove();
+          if (payload?.completion_id) delete _reactionsCache[payload.completion_id];
+        })
+        .subscribe();
+      _friendChannelMap[f.id] = ch;
+    }
+  } catch (_) {}
+}
+
+function broadcastFriendEvent(type, payload) {
+  if (!_myChannel) return;
+  _myChannel.send({ type: 'broadcast', event: type, payload }).catch(() => {});
+}
+
+function recordBadgeEvent(badgeId) {
+  if (!_sbUser) return;
+  _sb.from('habit_completions').insert({
+    user_id: _sbUser.id,
+    habit_name: `__badge:${badgeId}__`,
+    xp_earned: 0,
+  }).then(() => {}).catch(() => {});
+}
+
+async function showFriendNotif(title, body) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification(title, {
+      body,
+      icon: 'icon-512.png',
+      badge: 'icon-192.png',
+      tag: 'friend-event-' + Date.now(),
+      data: { url: './' }
+    });
+  } catch (_) {}
+}
+
+// ─── Helpers ───────────────────────────────
+
+function initials2(name) {
+  if (!name) return '?';
+  return name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+}
+
+function avatarHTML(name, url) {
+  if (url) return `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" alt="">`;
+  return initials2(name);
+}
+
+function fmtAgo(mins) {
+  if (mins < 60)   return mins + 'm ago';
+  if (mins < 1440) return Math.floor(mins / 60) + 'h ago';
+  return Math.floor(mins / 1440) + 'd ago';
+}
+
+function fmtAgoDate(iso) {
+  return fmtAgo(Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000)));
+}
+
+// ─── Supabase friend helpers ───────────────
+
+async function sbSearchByCode(code) {
+  if (!_sbUser) return null;
+  let q = code.trim().toUpperCase();
+  // allow typing just the 4-char suffix, e.g. "AB12" → "IGN-AB12"
+  if (!q.startsWith('IGN-') && q.length <= 4) q = 'IGN-' + q;
+  console.log('[sbSearchByCode] querying social_code =', JSON.stringify(q), '| neq id =', _sbUser.id);
+  const { data, error } = await _sb.from('profiles')
+    .select('id, display_name, level, streak, social_code, avatar_url')
+    .eq('social_code', q)
+    .neq('id', _sbUser.id)
+    .maybeSingle();
+  console.log('[sbSearchByCode] raw response — data:', data, '| error:', error);
+  return data;
+}
+
+async function sbSearchByName(query) {
+  if (!_sbUser) return [];
+  const { data, error } = await _sb.from('profiles')
+    .select('id, display_name, level, streak, social_code, avatar_url')
+    .ilike('display_name', `%${query}%`)
+    .neq('id', _sbUser.id)
+    .limit(10);
+  if (error) console.error('sbSearchByName error:', error);
+  return data || [];
+}
+
+async function sbSendFriendRequest(receiverId) {
+  const { error } = await _sb.from('friendships').insert({
+    requester_id: _sbUser.id,
+    receiver_id:  receiverId,
+    status:       'pending',
+  });
+  if (error) throw error;
+}
+
+async function sbAcceptFriendRequest(friendshipId) {
+  const { error } = await _sb.from('friendships')
+    .update({ status: 'accepted' })
+    .eq('id', friendshipId);
+  if (error) throw error;
+}
+
+async function sbGetFriends() {
+  if (!_sbUser) return [];
+  const { data: fships } = await _sb.from('friendships')
+    .select('id, requester_id, receiver_id')
+    .eq('status', 'accepted')
+    .or(`requester_id.eq.${_sbUser.id},receiver_id.eq.${_sbUser.id}`);
+  if (!fships?.length) return [];
+  const friendIds = fships.map(f => f.requester_id === _sbUser.id ? f.receiver_id : f.requester_id);
+  const { data: profiles } = await _sb.from('profiles')
+    .select('id, display_name, level, streak, social_code, avatar_url')
+    .in('id', friendIds);
+  const pm = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+  return fships.map(f => {
+    const friendId = f.requester_id === _sbUser.id ? f.receiver_id : f.requester_id;
+    return pm[friendId] ? { ...pm[friendId], friendshipId: f.id } : null;
+  }).filter(Boolean);
+}
+
+async function sbRemoveFriend(friendshipId) {
+  const { error } = await _sb.from('friendships').delete().eq('id', friendshipId);
+  if (error) throw error;
+}
+
+async function sbGetPendingRequests() {
+  if (!_sbUser) return [];
+  const { data: fships } = await _sb.from('friendships')
+    .select('id, requester_id')
+    .eq('receiver_id', _sbUser.id)
+    .eq('status', 'pending');
+  if (!fships?.length) return [];
+  const requesterIds = fships.map(f => f.requester_id);
+  const { data: profiles } = await _sb.from('profiles')
+    .select('id, display_name, level, social_code, avatar_url')
+    .in('id', requesterIds);
+  const pm = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+  return fships.map(f => ({ id: f.id, requester: pm[f.requester_id] || null }));
+}
+
+async function sbGetFriendFeed() {
+  if (!_sbUser) return [];
+  const friends = await sbGetFriends();
+  const ids = [...friends.map(f => f.id), _sbUser.id];
+  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const { data: completions } = await _sb.from('habit_completions')
+    .select('id, user_id, habit_name, xp_earned, completed_at, streak_at_time')
+    .in('user_id', ids)
+    .gte('completed_at', cutoff)
+    .order('completed_at', { ascending: false })
+    .limit(40);
+  if (!completions?.length) return [];
+  const selfProfile = { id: _sbUser.id, display_name: S.profileName || 'You', level: currentLevel(), streak: S.streak, avatar_url: S.profilePic };
+  const pm = Object.fromEntries([...friends, selfProfile].map(f => [f.id, f]));
+  return completions.map(c => ({ ...c, profile: pm[c.user_id] || null }));
+}
+
+function emptyFeedHTML() {
+  return `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+    <div style="font-size:28px;margin-bottom:12px;">🌱</div>
+    <div style="font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">No activity yet</div>
+    <div style="font-size:13px;">Add friends to see their progress here</div>
+  </div>`;
+}
+
+function emptyFriendsHTML() {
+  return `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+    <div style="font-size:28px;margin-bottom:12px;">👥</div>
+    <div style="font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">No friends yet</div>
+    <div style="font-size:13px;">Find friends using their code in the Find tab</div>
+  </div>`;
+}
+
+// ─── Reactions ──────────────────────────────
+
+let _reactionsCache = {};
+
+async function loadFeedReactions(completionIds) {
+  if (!_sbUser || !completionIds.length) return;
+  const { data } = await _sb.from('reactions')
+    .select('completion_id, user_id, emoji')
+    .in('completion_id', completionIds);
+  _reactionsCache = {};
+  for (const r of (data || [])) {
+    if (!_reactionsCache[r.completion_id]) _reactionsCache[r.completion_id] = [];
+    _reactionsCache[r.completion_id].push({ user_id: r.user_id, emoji: r.emoji });
+  }
+}
+
+function renderHeartCount(completionId) {
+  const reactions = _reactionsCache[completionId] || [];
+  const count = reactions.length;
+  const isMine = reactions.some(r => r.user_id === _sbUser?.id);
+  if (count === 0) return '';
+  return `<span class="feed-heart-lbl${isMine ? ' liked' : ''}" onclick="showLikedBy(event,'${completionId}')" style="cursor:pointer;" title="See who liked this">❤️ ${count}</span>`;
+}
+
+function showHeartAnimation(completionId) {
+  const card = document.getElementById('feed-card-' + completionId);
+  if (!card) return;
+  const heart = document.createElement('div');
+  heart.className = 'heart-burst';
+  heart.textContent = '❤️';
+  card.appendChild(heart);
+  setTimeout(() => heart.remove(), 700);
+}
+
+async function toggleReaction(completionId) {
+  if (!_sbUser) return;
+  if (!_reactionsCache[completionId]) _reactionsCache[completionId] = [];
+  const reactions = _reactionsCache[completionId];
+  const myIdx = reactions.findIndex(r => r.user_id === _sbUser.id);
+  const removing = myIdx !== -1;
+
+  if (!removing) showHeartAnimation(completionId);
+
+  if (removing) {
+    reactions.splice(myIdx, 1);
+  } else {
+    reactions.push({ user_id: _sbUser.id, emoji: '❤️' });
+  }
+
+  const el = document.getElementById('rxn-' + completionId);
+  if (el) el.innerHTML = renderHeartCount(completionId);
+
+  try {
+    if (removing) {
+      await _sb.from('reactions').delete()
+        .eq('completion_id', completionId).eq('user_id', _sbUser.id);
+    } else {
+      await _sb.from('reactions').upsert(
+        { completion_id: completionId, user_id: _sbUser.id, emoji: '❤️' },
+        { onConflict: 'completion_id,user_id' }
+      );
+      // Notify post owner if it's not our own post
+      const owner = _completionOwnerMap[completionId];
+      if (owner && owner.userId !== _sbUser.id) {
+        const ownerCh = _friendChannelMap[owner.userId];
+        if (ownerCh) ownerCh.send({ type: 'broadcast', event: 'got_like', payload: {
+          reactor_name: S.profileName || 'Someone',
+          habit_name: owner.habitName,
+          completion_id: completionId,
+        }}).catch(() => {});
+      }
+    }
+  } catch (_) { toast('Could not save reaction', 'error'); }
+}
+
+// ─── Notifications ─────────────────────────
+
+function addNotification(type, data) {
+  _notifs.unshift({ id: Date.now() + Math.random(), type, data, time: new Date(), read: false });
+  _notifUnread++;
+  updateNotifBadge();
+  if (document.getElementById('notifPanel').style.display === 'block') renderNotifications();
+}
+
+function updateNotifBadge() {
+  const el = document.getElementById('notifBadge');
+  if (!el) return;
+  if (_notifUnread > 0) { el.textContent = _notifUnread > 9 ? '9+' : String(_notifUnread); el.style.display = 'block'; }
+  else el.style.display = 'none';
+}
+
+function openNotifPanel() {
+  document.getElementById('notifPanel').style.display = 'block';
+  document.getElementById('notifPanelBg').style.display = 'block';
+  renderNotifications();
+}
+
+function closeNotifPanel() {
+  document.getElementById('notifPanel').style.display = 'none';
+  document.getElementById('notifPanelBg').style.display = 'none';
+  _notifs.forEach(n => n.read = true);
+  _notifUnread = 0;
+  updateNotifBadge();
+}
+
+function clearNotifs() { _notifs = []; _notifUnread = 0; updateNotifBadge(); renderNotifications(); }
+
+function renderNotifications() {
+  const el = document.getElementById('notifList');
+  if (!el) return;
+  if (!_notifs.length) {
+    el.innerHTML = `<div style="padding:28px 16px;text-align:center;color:var(--text-muted);font-size:13px;">No notifications yet</div>`;
+    return;
+  }
+  el.innerHTML = _notifs.map(n => {
+    let icon = '🔔', text = '';
+    if (n.type === 'like') {
+      icon = '❤️';
+      text = `<b>${esc(n.data?.reactor_name || 'Someone')}</b> liked your habit <b>"${esc(n.data?.habit_name || '')}"</b>`;
+    } else if (n.type === 'streak_milestone') {
+      icon = '🔥';
+      text = `<b>${esc(n.data?.name || 'A friend')}</b> is on a ${n.data?.streak || ''}-day streak!`;
+    } else if (n.type === 'super_streak') {
+      icon = '⭐';
+      text = `<b>${esc(n.data?.name || 'A friend')}</b> completed all their habits today!`;
+    } else if (n.type === 'friend_request') {
+      icon = '👤';
+      text = `<b>${esc(n.data?.name || 'Someone')}</b> sent you a friend request`;
+    }
+    return `<div class="notif-item${n.read ? '' : ' unread'}">
+      <div class="notif-icon">${icon}</div>
+      <div class="notif-body">
+        <div class="notif-text">${text}</div>
+        <div class="notif-when">${fmtAgoDate(n.time.toISOString())}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function checkFriendRequestNotifs() {
+  try {
+    const reqs = await sbGetPendingRequests();
+    for (const r of reqs) {
+      if (r.requester) addNotification('friend_request', { name: r.requester.display_name || 'Someone' });
+    }
+  } catch (_) {}
+}
+
+// ─── Who liked ─────────────────────────────
+
+async function showLikedBy(event, completionId) {
+  event.stopPropagation();
+  const reactions = _reactionsCache[completionId] || [];
+  if (!reactions.length) return;
+
+  const unknownIds = reactions.map(r => r.user_id).filter(id => !_profileCache[id]);
+  if (unknownIds.length) {
+    const { data: profiles } = await _sb.from('profiles')
+      .select('id, display_name, avatar_url').in('id', unknownIds);
+    for (const p of (profiles || [])) _profileCache[p.id] = p;
+  }
+
+  const popover = document.getElementById('likedByPopover');
+  popover.innerHTML = reactions.map(r => {
+    const p = _profileCache[r.user_id];
+    const name = r.user_id === _sbUser?.id ? (S.profileName || 'You') : (p?.display_name || 'Someone');
+    const avatarContent = p?.avatar_url
+      ? `<img src="${p.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`
+      : initials2(name);
+    return `<div class="liked-by-item"><div class="liked-by-avatar">${avatarContent}</div>${esc(name)}</div>`;
+  }).join('');
+
+  const rect = event.target.getBoundingClientRect();
+  popover.style.left = Math.min(rect.left, window.innerWidth - 230) + 'px';
+  popover.style.top = (rect.bottom + 6) + 'px';
+  popover.style.display = 'block';
+
+  setTimeout(() => {
+    const close = (e) => { if (!popover.contains(e.target)) { popover.style.display = 'none'; document.removeEventListener('click', close); } };
+    document.addEventListener('click', close);
+  }, 50);
+}
+
+// ─── Render functions ──────────────────────
+
+function switchFriendSeg(seg) {
+  document.querySelectorAll('.fseg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.seg === seg));
+  document.querySelectorAll('.fseg-pane').forEach(p =>
+    p.classList.remove('active'));
+  document.getElementById('fseg-' + seg).classList.add('active');
+  if (seg === 'feed')    renderFriendsFeed();
+  if (seg === 'friends') renderFriendsList();
+  if (seg === 'find')    renderFindTab();
+}
+
+async function renderFriendsFeed() {
+  const el = document.getElementById('feedList');
+  try {
+    const entries = await sbGetFriendFeed();
+    if (!entries.length) { el.innerHTML = emptyFeedHTML(); return; }
+    await loadFeedReactions(entries.map(e => e.id));
+    _completionOwnerMap = {};
+    const cards = entries.map(e => {
+      _completionOwnerMap[e.id] = { userId: e.user_id, habitName: e.habit_name };
+      const name = e.profile?.display_name || 'Friend';
+      const isBadge = e.habit_name?.startsWith('__badge:');
+
+      if (isBadge) {
+        const badgeId = e.habit_name.slice(8, -2);
+        const badge = BADGES.find(b => b.id === badgeId);
+        if (!badge) return '';
+        return `<div class="feed-card badge-card" id="feed-card-${e.id}" ondblclick="toggleReaction('${e.id}')">
+          <div class="feed-avatar">${avatarHTML(name, e.profile?.avatar_url)}</div>
+          <div class="feed-body">
+            <div class="feed-name">${esc(name)}</div>
+            <div class="feed-badge-label">Badge Earned</div>
+            <div class="feed-habit">${badge.icon} ${badge.name}</div>
+            <div class="feed-footer">
+              <span class="feed-time-lbl">${fmtAgoDate(e.completed_at)}</span>
+              <span id="rxn-${e.id}">${renderHeartCount(e.id)}</span>
+            </div>
+          </div>
+          <div class="feed-badge-icon-lg">${badge.icon}</div>
+        </div>`;
+      }
+
+      const streak = e.streak_at_time ?? e.profile?.streak ?? 0;
+      const isGold = streak >= 7;
+      const streakHTML = streak > 0
+        ? `<div class="feed-streak${isGold ? ' gold' : ''}">
+            <div class="feed-streak-flame">🔥</div>
+            <div class="feed-streak-num">${streak}</div>
+            <div class="feed-streak-lbl">streak</div>
+           </div>`
+        : '';
+      return `<div class="feed-card" id="feed-card-${e.id}" ondblclick="toggleReaction('${e.id}')">
+        <div class="feed-avatar">${avatarHTML(name, e.profile?.avatar_url)}</div>
+        <div class="feed-body">
+          <div class="feed-name">${esc(name)}</div>
+          <div class="feed-habit">${esc(e.habit_name)}</div>
+          <div class="feed-footer">
+            <span class="feed-xp-badge">+${e.xp_earned} XP</span>
+            <span class="feed-time-lbl">${fmtAgoDate(e.completed_at)}</span>
+            <span id="rxn-${e.id}">${renderHeartCount(e.id)}</span>
+          </div>
+        </div>
+        ${streakHTML}
+      </div>`;
+    }).filter(Boolean);
+    el.innerHTML = cards.length ? cards.join('') : emptyFeedHTML();
+  } catch (_) { el.innerHTML = emptyFeedHTML(); }
+}
+
+async function renderFriendsList() {
+  const el = document.getElementById('friendsList');
+  try {
+    const [friends, requests] = await Promise.all([sbGetFriends(), sbGetPendingRequests()]);
+    if (!friends.length && !requests.length) { el.innerHTML = emptyFriendsHTML(); return; }
+    let html = '';
+    if (requests.length) {
+      html += `<div class="p-section-title" style="margin:0 0 10px;">Requests (${requests.length})</div>`;
+      html += requests.map(r => {
+        const name = r.requester?.display_name || 'Someone';
+        return `<div class="friend-card" style="margin-bottom:8px;">
+          <div class="f-avatar">${avatarHTML(name, r.requester?.avatar_url)}</div>
+          <div class="f-info">
+            <div class="f-name">${name}</div>
+            <div class="f-lvl">Level ${r.requester?.level || 1}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button class="btn btn-primary" onclick="acceptRequest('${r.id}')"
+              style="font-size:12px;padding:6px 14px;">Accept</button>
+            <button class="btn btn-ghost" onclick="declineRequest('${r.id}')"
+              style="font-size:12px;padding:6px 14px;">Decline</button>
+          </div>
+        </div>`;
+      }).join('');
+      if (friends.length) html += `<div class="p-section-title" style="margin:16px 0 10px;">Friends</div>`;
+    }
+    html += friends.map(f => {
+      const name = f.display_name || 'Friend';
+      return `<div class="friend-card" onclick="openFriendModal('${f.id}','${f.friendshipId}')">
+        <div class="f-avatar">${avatarHTML(name, f.avatar_url)}</div>
+        <div class="f-info">
+          <div class="f-name">${name}</div>
+          <div class="f-lvl">Level ${f.level || 1}</div>
+        </div>
+        <div class="f-streak">🔥 ${f.streak || 0}</div>
+      </div>`;
+    }).join('');
+    el.innerHTML = html;
+  } catch (_) { el.innerHTML = emptyFriendsHTML(); }
+}
+
+async function acceptRequest(friendshipId) {
+  try {
+    await sbAcceptFriendRequest(friendshipId);
+    if (!S.unlocks.badges.includes('social_butterfly')) {
+      S.unlocks.badges.push('social_butterfly');
+      recordBadgeEvent('social_butterfly');
+      save(); syncToSupabase();
+      setTimeout(() => toast('🦋 Badge: Social Butterfly!', 'success'), 500);
+    }
+    renderFriendsList();
+    updateFriendsReqBadge();
+    toast('✅ Friend added!', 'success');
+  } catch (_) { toast('Could not accept request', 'error'); }
+}
+
+async function declineRequest(friendshipId) {
+  try {
+    const { error } = await _sb.from('friendships').delete().eq('id', friendshipId);
+    if (error) throw error;
+    renderFriendsList();
+    updateFriendsReqBadge();
+    toast('Request declined', 'info');
+  } catch (_) { toast('Could not decline request', 'error'); }
+}
+
+let _codeVisible = false;
+
+function renderFindTab() {
+  _codeVisible = false;
+  const el  = document.getElementById('friendCode');
+  const btn = document.getElementById('toggleCodeBtn');
+  if (el)  el.textContent  = 'IGN-····';
+  if (btn) btn.textContent = 'Reveal';
+  renderFindResults();
+}
+
+function toggleFriendCode() {
+  _codeVisible = !_codeVisible;
+  const el  = document.getElementById('friendCode');
+  const btn = document.getElementById('toggleCodeBtn');
+  if (el)  el.textContent  = _codeVisible ? (S.socialCode || 'IGN-····') : 'IGN-····';
+  if (btn) btn.textContent = _codeVisible ? 'Hide' : 'Reveal';
+}
+
+async function renderFindResults() {
+  const raw  = (document.getElementById('friendSearchIn')?.value || '').trim();
+  const wrap = document.getElementById('findResultsWrap');
+  if (raw.length < 2) { wrap.innerHTML = ''; return; }
+
+  const q      = raw.toUpperCase();
+  const isCode = q.startsWith('IGN-') || (/^[A-Z0-9]+$/.test(q) && q.length <= 4);
+
+  wrap.innerHTML = '<div style="text-align:center;padding:12px;color:var(--text-muted);">Searching…</div>';
+  try {
+    // Fetch matching profiles
+    let profiles;
+    if (isCode) {
+      const single = await sbSearchByCode(raw);
+      profiles = single ? [single] : [];
+    } else {
+      profiles = await sbSearchByName(raw);
+    }
+
+    if (!profiles.length) {
+      wrap.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:13px;">No users found.</div>';
+      return;
+    }
+
+    // Batch-fetch all friendships involving the current user — one query for all results
+    const { data: myFriendships } = await _sb.from('friendships')
+      .select('requester_id, receiver_id, status')
+      .or(`requester_id.eq.${_sbUser.id},receiver_id.eq.${_sbUser.id}`);
+
+    const friendshipStatus = (profileId) => {
+      const f = (myFriendships || []).find(f =>
+        (f.requester_id === _sbUser.id && f.receiver_id === profileId) ||
+        (f.receiver_id  === _sbUser.id && f.requester_id === profileId)
+      );
+      return f?.status || null;
+    };
+
+    wrap.innerHTML = profiles.map(p => {
+      const name   = p.display_name || 'Unknown';
+      const status = friendshipStatus(p.id);
+      let addBtn;
+      if (status === 'accepted') {
+        addBtn = `<button class="btn btn-ghost" disabled style="font-size:12px;padding:6px 14px;flex-shrink:0;opacity:0.5;">Friends</button>`;
+      } else if (status === 'pending') {
+        addBtn = `<button class="btn btn-ghost" disabled style="font-size:12px;padding:6px 14px;flex-shrink:0;opacity:0.5;">Pending</button>`;
+      } else {
+        addBtn = `<button class="btn btn-ghost" onclick="sendRequest('${p.id}', this)"
+          style="font-size:12px;padding:6px 14px;flex-shrink:0;">+ Add</button>`;
+      }
+      return `<div class="find-result">
+        <div class="f-avatar">${avatarHTML(name, p.avatar_url)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);">${name}</div>
+          <div style="font-size:12px;color:var(--text-muted);">${p.social_code || ''} · Level ${p.level || 1}</div>
+        </div>
+        ${addBtn}
+      </div>`;
+    }).join('');
+  } catch (err) { console.error('renderFindResults error:', err); wrap.innerHTML = ''; }
+}
+
+async function sendRequest(profileId, btn) {
+  if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
+  try {
+    await sbSendFriendRequest(profileId);
+    if (btn) { btn.textContent = 'Sent ✓'; btn.disabled = true; btn.style.opacity = '0.5'; }
+    toast('Friend request sent!', 'success');
+  } catch (_) {
+    if (btn) { btn.textContent = '+ Add'; btn.disabled = false; }
+    toast('Could not send request', 'error');
+  }
+}
+
+async function copyFriendCode(e) {
+  const code = S.socialCode || '';
+  if (!code) return;
+  const btn = e.currentTarget;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(code);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+  } catch (_) {
+    btn.textContent = 'Failed';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+  }
+}
+
+async function openFriendModal(profileId, friendshipId) {
+  document.getElementById('fpAvatar').innerHTML     = '…';
+  document.getElementById('fpName').textContent     = 'Loading…';
+  document.getElementById('fpMeta').textContent     = '';
+  document.getElementById('fpCode').textContent     = '';
+  document.getElementById('fpBio').textContent      = '';
+  document.getElementById('fpBadges').innerHTML     = '';
+  document.getElementById('fpCalGrid').innerHTML    = '';
+  document.getElementById('fpUnfriendWrap').innerHTML = '';
+  document.getElementById('friendModal').classList.add('open');
+
+  try {
+    const since = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString();
+    const [{ data: prof }, { data: completions }] = await Promise.all([
+      _sb.from('profiles')
+        .select('id,display_name,level,streak,social_code,avatar_url')
+        .eq('id', profileId).maybeSingle(),
+      _sb.from('habit_completions')
+        .select('completed_at').eq('user_id', profileId).gte('completed_at', since)
+    ]);
+    if (!prof) { closeFriendModal(); return; }
+
+    const name = prof.display_name || 'Friend';
+    document.getElementById('fpAvatar').innerHTML  = avatarHTML(name, prof.avatar_url);
+    document.getElementById('fpName').textContent  = name;
+    document.getElementById('fpMeta').textContent  = `Level ${prof.level || 1} · 🔥 ${prof.streak || 0} day streak`;
+    document.getElementById('fpCode').textContent  = prof.social_code || '';
+
+    // bio + featured_badges are optional columns — won't crash if not yet added via SQL
+    let bio = null, featIds = [];
+    try {
+      const { data: ext, error: extErr } = await _sb.from('profiles')
+        .select('bio,featured_badges').eq('id', profileId).maybeSingle();
+      console.log('[openFriendModal] ext:', ext, '| error:', extErr);
+      bio     = ext?.bio || null;
+      featIds = Array.isArray(ext?.featured_badges) ? ext.featured_badges : [];
+    } catch (e) { console.warn('[openFriendModal] extended query failed:', e); }
+
+    const bioEl = document.getElementById('fpBio');
+    if (bio) { bioEl.textContent = bio; bioEl.style.display = ''; }
+    else     { bioEl.style.display = 'none'; }
+
+    const featIdsResolved = featIds;
+
+    document.getElementById('fpBadges').innerHTML = featIdsResolved.length
+      ? featIdsResolved.map(id => {
+          const b = BADGES.find(x => x.id === id);
+          return b ? `<span class="fp-badge">${b.icon} ${b.name}</span>` : '';
+        }).filter(Boolean).join('')
+      : '<span style="color:var(--text-muted);font-size:12px;">No featured badges</span>';
+
+    // 28-day activity calendar aligned to day-of-week
+    const DOW = ['S','M','T','W','T','F','S'];
+    const counts = {};
+    for (const c of completions || []) {
+      const day = c.completed_at.slice(0, 10);
+      counts[day] = (counts[day] || 0) + 1;
+    }
+    const days = [];
+    for (let i = 27; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      days.push(d.toISOString().slice(0, 10));
+    }
+    const firstDow = new Date(days[0]).getDay();
+    const headers  = DOW.map(d => `<div style="font-size:10px;text-align:center;color:var(--text-muted);font-weight:600;">${d}</div>`).join('');
+    const padding  = Array(firstDow).fill('<div></div>').join('');
+    const cells    = days.map(d => {
+      const n = counts[d] || 0;
+      const cls = n === 0 ? 'none' : n <= 2 ? 'partial' : 'full';
+      return `<div class="fp-week-cell cal-day ${cls}" title="${d}"></div>`;
+    }).join('');
+    document.getElementById('fpCalGrid').innerHTML = headers + padding + cells;
+
+    if (friendshipId) {
+      document.getElementById('fpUnfriendWrap').innerHTML =
+        `<button class="btn btn-danger" onclick="removeFriend('${friendshipId}')"
+          style="font-size:12px;padding:6px 14px;">Unfriend</button>`;
+    }
+  } catch (err) { console.error('openFriendModal error:', err); }
+}
+
+async function removeFriend(friendshipId) {
+  try {
+    await sbRemoveFriend(friendshipId);
+    closeFriendModal();
+    renderFriendsList();
+    toast('Removed from friends', 'info');
+  } catch (_) { toast('Could not remove friend', 'error'); }
+}
+
+function closeFriendModal() {
+  document.getElementById('friendModal').classList.remove('open');
+}
+
+async function startApp() {
+  load();
+  await loadFromSupabase();
+  dailyReset();
+  checkSurgeExpiry();
+  applyTheme(S.unlocks.theme || 'default');
+  if (S.unlocks.prestige) document.body.setAttribute('data-prestige','true');
+
+  document.getElementById('todayDate').textContent = fmtDate(today());
+
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.addEventListener('click', () => switchTab(t.dataset.tab));
+  });
+
+  const emailEl = document.getElementById('accountEmail');
+  if (emailEl && _sbUser) emailEl.textContent = _sbUser.email;
+
+  renderHabits();
+  updateProgress();
+  updateHeader();
+  renderProfileBtn();
+  renderPowerupBar();
+  initCropDrag();
+  syncReminderUI();
+  scheduleReminder();
+  maybeShowNotifBanner();
+  save();
+
+  setInterval(checkSurgeExpiry, 60000);
+  setInterval(dailyReset, 60000);
+  updateFriendsReqBadge();
+  initMyChannel();
+  initFriendChannels();
+  checkFriendRequestNotifs();
+}
+
+async function init() {
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (session) {
+      _sbUser = session.user;
+      console.log('[Ignite] Session restored, auth.uid():', _sbUser.id);
+      await startApp();
+      return;
+    }
+  } catch (_) {}
+  document.getElementById('authScreen').classList.remove('sb-hidden');
+}
+
+// Keep session fresh and handle sign-out from another tab
+_sb.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_OUT' && _sbUser) window.location.reload();
+});
+
+init();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+}
+</script>
+</body>
+</html>
