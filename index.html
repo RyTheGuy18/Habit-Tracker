@@ -3804,10 +3804,13 @@ function eraseProgressConfirm() {
   Object.keys(_habitDbTimers).forEach(k => { clearTimeout(_habitDbTimers[k]); delete _habitDbTimers[k]; });
   save();
   applyTheme('default');
+  document.body.removeAttribute('data-prestige');
   renderHabits();
   updateProgress();
   updateHeader();
+  renderPowerupBar();
   renderProfile();
+  renderShop();
 
   // Wipe this user's habit_completions from Supabase so leaderboard resets too
   if (_sbUser) {
